@@ -1,4 +1,4 @@
-const CACHE = 'arac-bakim-v1';
+const CACHE = 'arac-bakim-v2';
 const ASSETS = ['./index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
@@ -17,4 +17,11 @@ self.addEventListener('fetch', e => {
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request).catch(() => caches.match('./index.html')))
   );
+});
+
+self.addEventListener('push', e => {
+  const data = e.data ? e.data.json() : { title: 'Araç Bakım', body: 'Bakım zamanı yaklaşıyor!' };
+  e.waitUntil(self.registration.showNotification(data.title, {
+    body: data.body, icon: './icon.png', badge: './icon.png'
+  }));
 });
