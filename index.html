@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AraçBakım">
+<meta name="theme-color" content="#e8ff3c">
+<title>Araç Bakım Takip</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0f0f;
+  --bg2: #1a1a1a;
+  --bg3: #242424;
+  --accent: #e8ff3c;
+  --accent2: #ff6b35;
+  --text: #f0f0f0;
+  --text2: #888;
+  --text3: #555;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.15);
+  --danger: #ff4444;
+  --warn: #ffaa00;
+  --ok: #44dd88;
+  --radius: 12px;
+  --header-height: 64px;
+  --nav-height: 64px;
+  --font-display: 'Barlow Condensed', sans-serif;
+  --font-body: 'Barlow', sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;overscroll-behavior:none}
+input,select,textarea,button{font-family:var(--font-body);font-size:15px}
+button{cursor:pointer;border:none;background:none;color:var(--text)}
+
+/* scrollbar */
+::-webkit-scrollbar{width:0}
+
+/* Layout */
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh;max-width:480px;margin:0 auto;position:relative;overflow:hidden}
+
+/* Views */
+.view{display:none;flex-direction:column;flex:1;overflow:hidden}
+.view.active{display:flex}
+
+/* Header */
+.header{height:var(--header-height);display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;padding-top:env(safe-area-inset-top)}
+.header-title{font-family:var(--font-display);font-size:22px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase}
+.header-sub{font-size:11px;color:var(--text2);font-family:var(--font-display);letter-spacing:1px;text-transform:uppercase}
+
+/* Nav */
+.nav{height:var(--nav-height);display:flex;background:var(--bg);border-top:1px solid var(--border);flex-shrink:0;padding-bottom:env(safe-area-inset-bottom)}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;font-family:var(--font-display);letter-spacing:1px;text-transform:uppercase;color:var(--text3);transition:color 0.15s}
+.nav-btn.active{color:var(--accent)}
+.nav-btn svg{width:22px;height:22px}
+
+/* Scroll area */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.scroll-pad{padding:14px 14px 20px}
+
+/* Cards */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px}
+.card-row{display:flex;align-items:flex-start;gap:12px}
+.card-icon{font-size:28px;line-height:1;flex-shrink:0;margin-top:2px}
+.card-body{flex:1;min-width:0}
+.card-title{font-size:15px;font-weight:500;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+.card-note{font-size:12px;color:var(--text2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-km{font-size:12px;color:var(--text2)}
+.card-actions{display:flex;gap:6px;flex-shrink:0;margin-top:2px}
+
+/* Stat bar */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:11px 10px}
+.stat-label{font-size:10px;color:var(--text2);font-family:var(--font-display);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.stat-val{font-size:20px;font-weight:700;font-family:var(--font-display);color:var(--accent)}
+
+/* Alert */
+.alert{background:#1c1800;border:1px solid var(--warn);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px}
+.alert-title{font-size:12px;color:var(--warn);font-family:var(--font-display);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.alert-item{font-size:13px;color:#ffcc66;margin-bottom:2px}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:3px 7px;border-radius:20px;font-size:11px;font-family:var(--font-display);letter-spacing:0.5px;font-weight:600}
+.badge-ok{background:rgba(68,221,136,0.15);color:var(--ok)}
+.badge-warn{background:rgba(255,170,0,0.15);color:var(--warn)}
+.badge-due{background:rgba(255,68,68,0.15);color:var(--danger)}
+.badge-info{background:rgba(232,255,60,0.1);color:var(--accent)}
+.badge-cat{background:var(--bg3);color:var(--text2)}
+
+/* Tabs */
+.tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.tab{flex:1;padding:12px 0;font-family:var(--font-display);font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);border-bottom:2px solid transparent;transition:all 0.15s}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* Buttons */
+.btn{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:7px 12px;font-size:13px;color:var(--text);transition:background 0.1s}
+.btn:active{background:var(--bg2)}
+.btn-accent{background:var(--accent);border:none;border-radius:8px;padding:9px 18px;font-size:14px;color:#0f0f0f;font-weight:600;font-family:var(--font-display);letter-spacing:0.5px;text-transform:uppercase}
+.btn-accent:active{opacity:0.85}
+.btn-danger{background:rgba(255,68,68,0.12);border:1px solid rgba(255,68,68,0.25);color:var(--danger)}
+.btn-full{width:100%;text-align:center;margin-top:4px}
+.btn-icon{width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:14px;border-radius:8px}
+
+/* Form */
+.form-group{margin-bottom:14px}
+.form-label{font-size:11px;color:var(--text2);font-family:var(--font-display);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;display:block}
+.form-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;color:var(--text);outline:none;transition:border-color 0.15s}
+.form-input:focus{border-color:var(--accent)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-check{display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;cursor:pointer}
+.form-check input{width:16px;height:16px;accent-color:var(--accent)}
+
+/* Category grid */
+.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.cat-btn{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;transition:all 0.15s}
+.cat-btn.selected{border-color:var(--accent);background:rgba(232,255,60,0.08)}
+.cat-btn-icon{font-size:22px;margin-bottom:4px}
+.cat-btn-label{font-size:10px;color:var(--text2);font-family:var(--font-display);letter-spacing:0.5px}
+.cat-btn.selected .cat-btn-label{color:var(--accent)}
+
+/* Arac view */
+.arac-hero{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:14px;text-align:center}
+.arac-emoji{font-size:52px;margin-bottom:10px}
+.arac-name{font-family:var(--font-display);font-size:26px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase}
+.arac-plate{display:inline-block;background:var(--accent);color:#0f0f0f;font-family:var(--font-display);font-weight:700;font-size:16px;padding:4px 14px;border-radius:6px;margin-top:6px;letter-spacing:2px}
+
+/* Empty */
+.empty{text-align:center;padding:50px 20px;color:var(--text3)}
+.empty-icon{font-size:42px;margin-bottom:12px}
+.empty-text{font-size:14px;line-height:1.6}
+
+/* Gider section */
+.gider-form{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;margin-bottom:14px}
+.gider-total{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.gider-total-label{font-size:11px;color:var(--text2);font-family:var(--font-display);letter-spacing:1px;text-transform:uppercase}
+.gider-total-val{font-family:var(--font-display);font-size:24px;font-weight:700;color:var(--accent)}
+
+/* Export/Import */
+.io-row{display:flex;gap:8px}
+.io-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);font-size:13px;color:var(--text);cursor:pointer;font-family:var(--font-display);letter-spacing:0.5px;text-transform:uppercase}
+.io-btn:active{background:var(--bg3)}
+.section-title{font-family:var(--font-display);font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);margin-bottom:10px;margin-top:4px}
+
+/* Toast */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--accent);color:#0f0f0f;padding:10px 20px;border-radius:30px;font-family:var(--font-display);font-weight:600;font-size:13px;letter-spacing:0.5px;opacity:0;transition:all 0.25s;pointer-events:none;z-index:100;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Install banner */
+.install-banner{display:none;align-items:center;justify-content:space-between;gap:10px;background:rgba(232,255,60,0.08);border:1px solid rgba(232,255,60,0.2);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px}
+.install-banner.visible{display:flex}
+.install-text{font-size:13px;color:var(--accent);font-family:var(--font-display);letter-spacing:0.3px}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ANA VIEW -->
+  <div class="view active" id="view-ana">
+    <div class="header">
+      <div>
+        <div class="header-title" id="arac-header-name">Aracım</div>
+        <div class="header-sub" id="arac-header-plate">Araç bilgisi ekleyin →</div>
+      </div>
+      <button class="btn-accent" onclick="showView('ekle')" style="padding:8px 16px;font-size:13px">+ Ekle</button>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="tumu" onclick="setTab(this,'tumu')">Tümü</button>
+      <button class="tab" data-tab="bekleyen" onclick="setTab(this,'bekleyen')">Bekleyen</button>
+      <button class="tab" data-tab="tamamlandi" onclick="setTab(this,'tamamlandi')">Tamamlanan</button>
+    </div>
+    <div class="scroll">
+      <div class="scroll-pad">
+        <div id="install-banner" class="install-banner">
+          <span class="install-text">📲 Uygulamayı telefonuna kur</span>
+          <button class="btn-accent" onclick="installApp()" style="padding:6px 14px;font-size:12px">Kur</button>
+        </div>
+        <div id="alert-box" style="display:none"></div>
+        <div class="stats">
+          <div class="stat"><div class="stat-label">KM</div><div class="stat-val" id="stat-km">—</div></div>
+          <div class="stat"><div class="stat-label">Kayıt</div><div class="stat-val" id="stat-total">0</div></div>
+          <div class="stat"><div class="stat-label">Bekleyen</div><div class="stat-val" id="stat-bekleyen">0</div></div>
+        </div>
+        <div id="kayit-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EKLE VIEW -->
+  <div class="view" id="view-ekle">
+    <div class="header">
+      <button class="btn" onclick="showView('ana')">← Geri</button>
+      <div class="header-title">Yeni Kayıt</div>
+      <div style="width:60px"></div>
+    </div>
+    <div class="scroll">
+      <div class="scroll-pad">
+        <div class="form-group">
+          <label class="form-label">Kategori</label>
+          <div class="cat-grid" id="cat-grid"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Başlık *</label>
+          <input class="form-input" id="f-baslik" placeholder="Ör: Motor yağı değişimi">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tarih *</label>
+            <input type="date" class="form-input" id="f-tarih">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Yapılan KM</label>
+            <input type="number" class="form-input" id="f-km" placeholder="45000">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sonraki bakım KM</label>
+          <input type="number" class="form-input" id="f-sonraki-km" placeholder="50000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Maliyet (₺)</label>
+          <input type="number" class="form-input" id="f-maliyet" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notlar</label>
+          <textarea class="form-input" id="f-notlar" rows="3" placeholder="Kullanılan ürün, servis adı..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-check">
+            <input type="checkbox" id="f-tamamlandi">
+            <span>Tamamlandı olarak işaretle</span>
+          </label>
+        </div>
+        <button class="btn-accent btn-full" onclick="saveKayit()">Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARAÇ VIEW -->
+  <div class="view" id="view-arac">
+    <div class="header">
+      <button class="btn" onclick="showView('ana')">← Geri</button>
+      <div class="header-title">Araç</div>
+      <div style="width:60px"></div>
+    </div>
+    <div class="scroll">
+      <div class="scroll-pad">
+        <div class="arac-hero">
+          <div class="arac-emoji">🚗</div>
+          <div class="arac-name" id="hero-name">Aracınız</div>
+          <div id="hero-plate"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Marka</label>
+          <input class="form-input" id="a-marka" placeholder="Toyota">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Model</label>
+            <input class="form-input" id="a-model" placeholder="Corolla">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Yıl</label>
+            <input type="number" class="form-input" id="a-yil" placeholder="2020">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Plaka</label>
+          <input class="form-input" id="a-plaka" placeholder="34 ABC 123" style="text-transform:uppercase">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mevcut KM</label>
+          <input type="number" class="form-input" id="a-km" placeholder="49500">
+        </div>
+        <button class="btn-accent btn-full" onclick="saveArac()">Kaydet</button>
+
+        <div style="margin-top:24px">
+          <div class="section-title">Veri Yönetimi</div>
+          <div class="io-row">
+            <button class="io-btn" onclick="exportData()">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              JSON Yedekle
+            </button>
+            <label class="io-btn" style="cursor:pointer">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              JSON Yükle
+              <input type="file" accept=".json" onchange="importData(this)" style="display:none">
+            </label>
+          </div>
+        </div>
+
+        <div style="margin-top:16px">
+          <div class="section-title">Gider Özeti</div>
+          <div class="gider-total">
+            <div>
+              <div class="gider-total-label">Toplam Harcama</div>
+              <div class="gider-total-val" id="toplam-gider">₺0</div>
+            </div>
+            <div style="text-align:right">
+              <div class="gider-total-label">Bu Yıl</div>
+              <div class="gider-total-val" id="bu-yil-gider">₺0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="nav">
+    <button class="nav-btn active" id="nav-ana" onclick="showView('ana')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+      Ana Sayfa
+    </button>
+    <button class="nav-btn" id="nav-ekle" onclick="showView('ekle')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      Ekle
+    </button>
+    <button class="nav-btn" id="nav-arac" onclick="showView('arac')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="3" width="22" height="13" rx="2"/><path d="M5 19h2m10 0h2M1 16h22M8 12l2-4h4l2 4"/></svg>
+      Araç
+    </button>
+  </nav>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const CATS=[
+  {id:'yag',label:'Motor Yağı',icon:'🛢️'},
+  {id:'lastik',label:'Lastik',icon:'⭕'},
+  {id:'fren',label:'Fren',icon:'🔴'},
+  {id:'filtre',label:'Filtre',icon:'🔵'},
+  {id:'temizlik',label:'Temizlik',icon:'✨'},
+  {id:'muayene',label:'Muayene',icon:'📋'},
+  {id:'akü',label:'Akü',icon:'⚡'},
+  {id:'diger',label:'Diğer',icon:'🔧'},
+];
+
+const KEY='arac_bakim_v2';
+let data={arac:{marka:'',model:'',yil:'',plaka:''},kayitlar:[],mevcutKm:0};
+let selCat='yag';
+let curTab='tumu';
+let deferredPrompt=null;
+
+function load(){
+  try{const d=localStorage.getItem(KEY);if(d)data=JSON.parse(d);}catch(e){}
+}
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(data));}catch(e){}
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+function showView(v){
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(el=>el.classList.remove('active'));
+  const nb=document.getElementById('nav-'+v);
+  if(nb)nb.classList.add('active');
+  if(v==='ana')renderAna();
+  if(v==='arac')renderAracView();
+  if(v==='ekle')initForm();
+}
+
+function setTab(el,tab){
+  curTab=tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderAna();
+}
+
+function catIcon(id){return(CATS.find(c=>c.id===id)||{icon:'🔧'}).icon}
+
+function daysUntil(tarih){
+  const t=new Date(tarih);const n=new Date();n.setHours(0,0,0,0);
+  return Math.ceil((t-n)/(1000*60*60*24));
+}
+
+function statusBadge(k){
+  if(k.tamamlandi&&k.sonrakiKm&&data.mevcutKm>=k.sonrakiKm){
+    return`<span class="badge badge-due">⚠ Vadesi geçti</span>`;
+  }
+  if(k.tamamlandi&&k.sonrakiKm&&data.mevcutKm>=k.sonrakiKm-1500){
+    return`<span class="badge badge-warn">⏰ Yaklaşıyor</span>`;
+  }
+  if(!k.tamamlandi){
+    const g=daysUntil(k.tarih);
+    if(g<0)return`<span class="badge badge-due">Gecikmiş ${Math.abs(g)}g</span>`;
+    if(g<30)return`<span class="badge badge-warn">${g} gün kaldı</span>`;
+    return`<span class="badge badge-info">${g} gün kaldı</span>`;
+  }
+  return`<span class="badge badge-ok">✓ Tamam</span>`;
+}
+
+function fmtKm(n){return n?Number(n).toLocaleString('tr-TR')+'km':'';}
+function fmtDate(d){return d?new Date(d).toLocaleDateString('tr-TR'):''}
+
+function renderAna(){
+  // header
+  const a=data.arac;
+  document.getElementById('arac-header-name').textContent=
+    a.marka&&a.model?a.marka+' '+a.model:'Aracım';
+  document.getElementById('arac-header-plate').textContent=
+    a.plaka||'Araç bilgisi ekleyin →';
+
+  // stats
+  document.getElementById('stat-km').textContent=
+    data.mevcutKm?Number(data.mevcutKm).toLocaleString('tr-TR'):'—';
+  document.getElementById('stat-total').textContent=data.kayitlar.length;
+  document.getElementById('stat-bekleyen').textContent=
+    data.kayitlar.filter(k=>!k.tamamlandi).length;
+
+  // alert
+  const alertBox=document.getElementById('alert-box');
+  const yaklaşan=data.kayitlar.filter(k=>{
+    if(k.tamamlandi&&k.sonrakiKm)return data.mevcutKm>=k.sonrakiKm-1500;
+    if(!k.tamamlandi)return daysUntil(k.tarih)<30;
+    return false;
+  });
+  if(yaklaşan.length>0){
+    alertBox.style.display='block';
+    alertBox.innerHTML=`<div class="alert">
+      <div class="alert-title">⚠ Dikkat Gerektiren İşlemler</div>
+      ${yaklaşan.map(k=>`<div class="alert-item">${catIcon(k.kategori)} ${k.baslik}</div>`).join('')}
+    </div>`;
+  }else{alertBox.style.display='none';}
+
+  // list
+  let list=data.kayitlar;
+  if(curTab==='bekleyen')list=list.filter(k=>!k.tamamlandi);
+  if(curTab==='tamamlandi')list=list.filter(k=>k.tamamlandi);
+
+  const el=document.getElementById('kayit-list');
+  if(list.length===0){
+    el.innerHTML=`<div class="empty">
+      <div class="empty-icon">${curTab==='bekleyen'?'✅':curTab==='tamamlandi'?'📋':'🔧'}</div>
+      <div class="empty-text">Henüz kayıt yok.<br>Yeni bir bakım ekleyin.</div>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML=list.map(k=>`
+    <div class="card" id="card-${k.id}">
+      <div class="card-row">
+        <div class="card-icon">${catIcon(k.kategori)}</div>
+        <div class="card-body">
+          <div class="card-title">${k.baslik}</div>
+          <div class="card-meta">
+            ${statusBadge(k)}
+            <span style="font-size:11px;color:var(--text2)">${fmtDate(k.tarih)}</span>
+            ${k.maliyet?`<span style="font-size:11px;color:var(--accent2)">₺${Number(k.maliyet).toLocaleString('tr-TR')}</span>`:''}
+          </div>
+          ${k.km?`<div class="card-km">${fmtKm(k.km)}${k.sonrakiKm?' → '+fmtKm(k.sonrakiKm):''}</div>`:''}
+          ${k.notlar?`<div class="card-note">${k.notlar}</div>`:''}
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-icon" title="${k.tamamlandi?'Geri al':'Tamamla'}" onclick="toggleDone(${k.id})">${k.tamamlandi?'↩':'✓'}</button>
+          <button class="btn btn-icon btn-danger" title="Sil" onclick="deleteKayit(${k.id})">✕</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderAracView(){
+  const a=data.arac;
+  document.getElementById('a-marka').value=a.marka||'';
+  document.getElementById('a-model').value=a.model||'';
+  document.getElementById('a-yil').value=a.yil||'';
+  document.getElementById('a-plaka').value=a.plaka||'';
+  document.getElementById('a-km').value=data.mevcutKm||'';
+  document.getElementById('hero-name').textContent=
+    a.marka&&a.model?a.marka+' '+a.model:'Aracınız';
+  const hp=document.getElementById('hero-plate');
+  hp.innerHTML=a.plaka?`<div class="arac-plate">${a.plaka}</div>`:'';
+
+  // gider
+  const total=data.kayitlar.reduce((s,k)=>s+(k.maliyet?Number(k.maliyet):0),0);
+  const thisYear=new Date().getFullYear();
+  const yTotal=data.kayitlar.filter(k=>k.tarih&&new Date(k.tarih).getFullYear()===thisYear)
+    .reduce((s,k)=>s+(k.maliyet?Number(k.maliyet):0),0);
+  document.getElementById('toplam-gider').textContent='₺'+total.toLocaleString('tr-TR');
+  document.getElementById('bu-yil-gider').textContent='₺'+yTotal.toLocaleString('tr-TR');
+}
+
+function initForm(){
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('f-tarih').value=today;
+  document.getElementById('f-baslik').value='';
+  document.getElementById('f-km').value='';
+  document.getElementById('f-sonraki-km').value='';
+  document.getElementById('f-maliyet').value='';
+  document.getElementById('f-notlar').value='';
+  document.getElementById('f-tamamlandi').checked=false;
+  renderCatGrid();
+}
+
+function renderCatGrid(){
+  document.getElementById('cat-grid').innerHTML=CATS.map(c=>`
+    <div class="cat-btn${selCat===c.id?' selected':''}" onclick="selCat='${c.id}';renderCatGrid()">
+      <div class="cat-btn-icon">${c.icon}</div>
+      <div class="cat-btn-label">${c.label}</div>
+    </div>
+  `).join('');
+}
+
+function saveKayit(){
+  const baslik=document.getElementById('f-baslik').value.trim();
+  const tarih=document.getElementById('f-tarih').value;
+  if(!baslik||!tarih){showToast('Başlık ve tarih zorunlu!');return;}
+  const k={
+    id:Date.now(),
+    kategori:selCat,
+    baslik,tarih,
+    km:parseInt(document.getElementById('f-km').value)||null,
+    sonrakiKm:parseInt(document.getElementById('f-sonraki-km').value)||null,
+    maliyet:parseFloat(document.getElementById('f-maliyet').value)||null,
+    notlar:document.getElementById('f-notlar').value.trim(),
+    tamamlandi:document.getElementById('f-tamamlandi').checked,
+  };
+  data.kayitlar.unshift(k);
+  save();showToast('Kayıt eklendi ✓');showView('ana');
+}
+
+function saveArac(){
+  data.arac={
+    marka:document.getElementById('a-marka').value.trim(),
+    model:document.getElementById('a-model').value.trim(),
+    yil:document.getElementById('a-yil').value.trim(),
+    plaka:document.getElementById('a-plaka').value.trim().toUpperCase(),
+  };
+  data.mevcutKm=parseInt(document.getElementById('a-km').value)||0;
+  save();showToast('Araç bilgileri kaydedildi ✓');showView('ana');
+}
+
+function toggleDone(id){
+  const k=data.kayitlar.find(k=>k.id===id);
+  if(k){k.tamamlandi=!k.tamamlandi;save();renderAna();}
+}
+
+function deleteKayit(id){
+  if(!confirm('Bu kaydı silmek istediğinizden emin misiniz?'))return;
+  data.kayitlar=data.kayitlar.filter(k=>k.id!==id);
+  save();renderAna();
+}
+
+function exportData(){
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='arac-bakim-yedek-'+new Date().toISOString().split('T')[0]+'.json';
+  a.click();showToast('Yedek alındı ✓');
+}
+
+function importData(input){
+  const file=input.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      if(d.kayitlar){data=d;save();renderAna();renderAracView();showToast('Veriler yüklendi ✓');}
+      else{showToast('Geçersiz dosya!');}
+    }catch{showToast('Dosya okunamadı!');}
+    input.value='';
+  };
+  r.readAsText(file);
+}
+
+// PWA install
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredPrompt=e;
+  document.getElementById('install-banner').classList.add('visible');
+});
+
+function installApp(){
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(()=>{
+      deferredPrompt=null;
+      document.getElementById('install-banner').classList.remove('visible');
+    });
+  }
+}
+
+// Service Worker
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+// Init
+load();renderAna();renderCatGrid();
+</script>
+</body>
+</html>
