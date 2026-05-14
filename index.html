@@ -10,20 +10,35 @@
 <title>Araç Bakım</title>
 <link rel="manifest" href="./manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Sans:ital,wght@0,400;0,500;0,600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
+/* ── AYDINLIK TEMA ── */
 :root{
-  --bg:#0a0a0a;--bg2:#141414;--bg3:#1e1e1e;--bg4:#282828;
-  --accent:#ff6b35;--accent2:#ffd23f;--accent3:#06d6a0;
-  --text:#f2f2f2;--text2:#888;--text3:#444;
-  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
-  --danger:#ff4545;--warn:#ffaa00;--ok:#06d6a0;
-  --r:12px;--font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+  --bg:#F7F5F2;--bg2:#FFFFFF;--bg3:#EFECE7;--bg4:#E6E2DB;
+  --accent:#D95F2A;--accent2:#B8831A;--accent3:#1A8F62;
+  --text:#18160F;--text2:#78736C;--text3:#B4AFA7;
+  --border:rgba(0,0,0,0.09);--border2:rgba(0,0,0,0.15);
+  --danger:#C82828;--warn:#B8831A;--ok:#1A8F62;
+  --shadow:0 1px 4px rgba(0,0,0,0.07),0 1px 2px rgba(0,0,0,0.05);
+  --r:12px;--font:'Instrument Sans',sans-serif;--mono:'DM Mono',monospace;
+  --chart-grid:rgba(0,0,0,0.06);--chart-tick:#9A948C;
+}
+/* ── KARANLIK TEMA ── */
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#111210;--bg2:#1D1C1A;--bg3:#272522;--bg4:#302E2B;
+    --accent:#F07848;--accent2:#E8AA38;--accent3:#30C490;
+    --text:#F0EDE8;--text2:#8C877F;--text3:#4C4844;
+    --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+    --danger:#F05858;--warn:#E8AA38;--ok:#30C490;
+    --shadow:0 1px 4px rgba(0,0,0,0.35);
+    --chart-grid:rgba(255,255,255,0.05);--chart-tick:#6A6560;
+  }
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;overscroll-behavior:none}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;overscroll-behavior:none;-webkit-font-smoothing:antialiased}
 input,select,textarea,button{font-family:var(--font);font-size:15px;color:var(--text)}
 button{cursor:pointer;border:none;background:none}
 ::-webkit-scrollbar{width:0}
@@ -51,18 +66,22 @@ select option{background:var(--bg3)}
 .vchip.active{border-color:var(--accent);background:rgba(255,107,53,.1);color:var(--accent)}
 .vchip-add{background:transparent;border:1px dashed var(--text3);color:var(--text3)}
 
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
 .card-row{display:flex;align-items:flex-start;gap:11px}
 .c-icon{font-size:26px;line-height:1;flex-shrink:0;margin-top:1px}
 .c-body{flex:1;min-width:0}
 .c-title{font-size:14px;font-weight:500;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .c-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px}
 .c-note{font-size:12px;color:var(--text2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-note.expanded{white-space:normal;overflow:visible;text-overflow:unset}
 .c-km{font-size:12px;color:var(--text2);font-family:var(--mono)}
 .c-actions{display:flex;gap:5px;flex-shrink:0}
+.c-expand{font-size:11px;color:var(--accent);cursor:pointer;margin-top:5px;display:inline-block;font-family:var(--mono)}
+.c-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.btn-edit{background:rgba(217,95,42,.08);border:1px solid rgba(217,95,42,.2);color:var(--accent);border-radius:7px;padding:5px 10px;font-size:12px;font-family:var(--mono)}
 
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
-.stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:11px 10px}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:11px 10px;box-shadow:var(--shadow)}
 .stat-lbl{font-size:10px;color:var(--text2);font-family:var(--mono);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
 .stat-val{font-size:20px;font-weight:600;font-family:var(--mono);color:var(--accent)}
 
@@ -107,7 +126,7 @@ select option{background:var(--bg3)}
 
 .sec{font-size:11px;color:var(--text2);font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;margin-top:4px}
 
-.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px}
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
 .chart-title{font-size:13px;font-weight:500;margin-bottom:12px;color:var(--text2);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px}
 .chart-wrap{position:relative;height:180px}
 
@@ -407,6 +426,40 @@ select option{background:var(--bg3)}
 
 <div id="toast" class="toast"></div>
 
+<!-- DÜZENLE MODAL -->
+<div class="modal" id="modal-edit">
+  <div class="modal-box">
+    <div class="modal-title">Kaydı Düzenle</div>
+    <input type="hidden" id="ed-id">
+    <div class="fg">
+      <label class="fl">Kategori</label>
+      <div class="catgrid" id="edit-catgrid"></div>
+    </div>
+    <div class="fg">
+      <label class="fl">Başlık *</label>
+      <input class="fi" id="ed-baslik" placeholder="Ör: Motor yağı değişimi">
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Tarih *</label><input type="date" class="fi" id="ed-tarih"></div>
+      <div class="fg"><label class="fl">Yapılan KM</label><input type="number" class="fi" id="ed-km" placeholder="45000"></div>
+    </div>
+    <div class="fg"><label class="fl">Sonraki bakım KM</label><input type="number" class="fi" id="ed-skm" placeholder="50000"></div>
+    <div class="fg"><label class="fl">Maliyet (₺)</label><input type="number" class="fi" id="ed-maliyet" placeholder="0"></div>
+    <div class="fg"><label class="fl">Servis / Usta</label><input class="fi" id="ed-servis" placeholder="Servis adı veya usta"></div>
+    <div class="fg"><label class="fl">Notlar</label><textarea class="fi" id="ed-notlar" rows="3" placeholder="Kullanılan ürün, detaylar..."></textarea></div>
+    <div class="fg">
+      <label class="fcheck">
+        <input type="checkbox" id="ed-done">
+        <span>Tamamlandı</span>
+      </label>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:6px">
+      <button class="btn btn-full" onclick="closeModal('modal-edit')" style="flex:1">İptal</button>
+      <button class="btn-acc btn-full" id="ed-save-btn" onclick="updateKayit()" style="flex:2">Güncelle</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ─── SUPABASE ────────────────────────────────────
 const SUPA_URL = 'https://nvnvmnumcxckrxaxnqgg.supabase.co';
@@ -593,25 +646,95 @@ function renderAna(){
   if(!filtered.length){el.innerHTML=`<div class="empty"><div class="empty-ic">🔧</div><div class="empty-t">Kayıt yok.<br>+ Ekle ile başlayın.</div></div>`;return;}
   el.innerHTML=filtered.map(k=>{
     const a=araclar.find(x=>x.id===k.arac_id);
-    return`<div class="card"><div class="card-row">
-      <div class="c-icon">${catInfo(k.kat).ic}</div>
-      <div class="c-body">
-        <div class="c-title">${k.baslik}</div>
-        <div class="c-meta">${statusBadge(k)}<span style="font-size:11px;color:var(--text2)">${fmtDate(k.tarih)}</span>${k.maliyet?`<span style="font-size:11px;color:var(--accent2)">${fmtTL(k.maliyet)}</span>`:''}</div>
-        ${k.km?`<div class="c-km">${fmtKm(k.km)}${k.skm?' → '+fmtKm(k.skm):''}</div>`:''}
-        ${k.servis?`<div class="c-note">📍 ${k.servis}</div>`:''}
-        ${k.notlar?`<div class="c-note">${k.notlar}</div>`:''}
-        ${a&&araclar.length>1?`<div class="c-note" style="color:var(--text3)">${a.ikon} ${a.marka} ${a.model}</div>`:''}
+    const uzunNotlar=k.notlar&&k.notlar.length>60;
+    const uzunServis=k.servis&&k.servis.length>40;
+    const uzun=uzunNotlar||uzunServis;
+    return`<div class="card" id="card-${k.id}">
+      <div class="card-row">
+        <div class="c-icon">${catInfo(k.kat).ic}</div>
+        <div class="c-body">
+          <div class="c-title">${k.baslik}</div>
+          <div class="c-meta">${statusBadge(k)}<span style="font-size:11px;color:var(--text2)">${fmtDate(k.tarih)}</span>${k.maliyet?`<span style="font-size:11px;color:var(--accent2)">${fmtTL(k.maliyet)}</span>`:''}</div>
+          ${k.km?`<div class="c-km">${fmtKm(k.km)}${k.skm?' → '+fmtKm(k.skm):''}</div>`:''}
+          ${k.servis?`<div class="c-note" id="servis-${k.id}">📍 ${k.servis}</div>`:''}
+          ${k.notlar?`<div class="c-note" id="notlar-${k.id}">${k.notlar}</div>`:''}
+          ${uzun?`<span class="c-expand" onclick="toggleExpand('${k.id}')">▼ Devamını gör</span>`:''}
+          ${a&&araclar.length>1?`<div class="c-note" style="color:var(--text3)">${a.ikon} ${a.marka} ${a.model}</div>`:''}
+        </div>
+        <div class="c-actions">
+          <button class="btn btn-icon" title="${k.tamamlandi?'Geri al':'Tamamla'}" onclick="toggleDone('${k.id}','${k.tamamlandi}')">${k.tamamlandi?'↩':'✓'}</button>
+          <button class="btn btn-icon btn-del" title="Sil" onclick="delKayit('${k.id}')">✕</button>
+        </div>
       </div>
-      <div class="c-actions">
-        <button class="btn btn-icon" onclick="toggleDone('${k.id}','${k.tamamlandi}')">${k.tamamlandi?'↩':'✓'}</button>
-        <button class="btn btn-icon btn-del" onclick="delKayit('${k.id}')">✕</button>
+      <div class="c-footer">
+        <button class="btn-edit" onclick="openEditModal('${k.id}')">✎ Düzenle</button>
       </div>
-    </div></div>`;
+    </div>`;
   }).join('');
 }
 
 function selArac(id){selAracId=id;renderAna();}
+
+// ─── KART GENİŞLET ────────────────────────────────
+function toggleExpand(id){
+  const notEl=$('notlar-'+id);
+  const servisEl=$('servis-'+id);
+  const btn=document.querySelector(`#card-${id} .c-expand`);
+  const expanded=btn.textContent.includes('▲');
+  if(notEl){notEl.classList.toggle('expanded',!expanded);}
+  if(servisEl){servisEl.classList.toggle('expanded',!expanded);}
+  btn.textContent=expanded?'▼ Devamını gör':'▲ Gizle';
+}
+
+// ─── KAYIT DÜZENLE ────────────────────────────────
+let editCat='yag';
+
+function openEditModal(id){
+  const k=kayitlar.find(x=>x.id===id);
+  if(!k)return;
+  editCat=k.kat||'yag';
+  $('ed-id').value=k.id;
+  $('ed-baslik').value=k.baslik||'';
+  $('ed-tarih').value=k.tarih||'';
+  $('ed-km').value=k.km||'';
+  $('ed-skm').value=k.skm||'';
+  $('ed-maliyet').value=k.maliyet||'';
+  $('ed-servis').value=k.servis||'';
+  $('ed-notlar').value=k.notlar||'';
+  $('ed-done').checked=!!k.tamamlandi;
+  renderEditCatGrid();
+  $('modal-edit').classList.add('open');
+}
+
+function renderEditCatGrid(){
+  $('edit-catgrid').innerHTML=CATS.map(c=>`
+    <div class="catbtn${editCat===c.id?' sel':''}" onclick="editCat='${c.id}';renderEditCatGrid()">
+      <div class="catbtn-ic">${c.ic}</div>
+      <div class="catbtn-lb">${c.lb}</div>
+    </div>`).join('');
+}
+
+async function updateKayit(){
+  const id=$('ed-id').value;
+  const baslik=$('ed-baslik').value.trim();
+  const tarih=$('ed-tarih').value;
+  if(!baslik||!tarih){toast('Başlık ve tarih zorunlu!');return;}
+  const btn=$('ed-save-btn');btn.disabled=true;btn.textContent='Güncelleniyor...';
+  setSyncDot('syncing');
+  const updates={
+    kat:editCat,baslik,tarih,
+    km:parseInt($('ed-km').value)||null,
+    skm:parseInt($('ed-skm').value)||null,
+    maliyet:parseFloat($('ed-maliyet').value)||null,
+    servis:$('ed-servis').value.trim(),
+    notlar:$('ed-notlar').value.trim(),
+    tamamlandi:$('ed-done').checked,
+  };
+  const {error}=await sb.from('kayitlar').update(updates).eq('id',id);
+  btn.disabled=false;btn.textContent='Güncelle';
+  if(error){setSyncDot('err');toast('Hata: '+error.message);return;}
+  await loadAll();setSyncDot('ok');closeModal('modal-edit');renderAna();toast('Kayıt güncellendi ✓');
+}
 
 // ─── KAYIT ────────────────────────────────────────
 function initEkle(){
@@ -778,7 +901,7 @@ function renderYakit(){
   const AYLAR=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
   const lbls=aylar.map(a=>{const[y,m]=a.split('-');return AYLAR[parseInt(m)-1]+' '+y.slice(2)});
   if(charts.yakit)charts.yakit.destroy();
-  charts.yakit=new Chart($('yakitChart').getContext('2d'),{type:'bar',data:{labels:lbls,datasets:[{data:aylar.map(a=>ayMap[a]),backgroundColor:'rgba(255,210,63,.7)',borderColor:'#ffd23f',borderWidth:1,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#888',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{color:'#888',font:{size:10},callback:v=>'₺'+v.toLocaleString()},grid:{color:'rgba(255,255,255,.04)'}}}}});
+  charts.yakit=new Chart($('yakitChart').getContext('2d'),{type:'bar',data:{labels:lbls,datasets:[{data:aylar.map(a=>ayMap[a]),backgroundColor:'rgba(184,131,26,.65)',borderColor:'var(--accent2)',borderWidth:1,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'var(--chart-tick)',font:{size:10}},grid:{color:'var(--chart-grid)'}},y:{ticks:{color:'var(--chart-tick)',font:{size:10},callback:v=>'₺'+v.toLocaleString()},grid:{color:'var(--chart-grid)'}}}}});
 
   const el=$('yakit-list');
   if(!ylist.length){el.innerHTML=`<div class="empty"><div class="empty-ic">⛽</div><div class="empty-t">Yakıt kaydı yok.</div></div>`;return;}
@@ -820,7 +943,7 @@ function renderRapor(){
   const kLbls=Object.keys(katMap),kVals=kLbls.map(l=>katMap[l]);
   const colors=['#ff6b35','#ffd23f','#06d6a0','#3a86ff','#ff4ecd','#8338ec','#fb5607','#ffbe0b'];
   if(charts.kat)charts.kat.destroy();
-  charts.kat=new Chart($('katChart').getContext('2d'),{type:'doughnut',data:{labels:kLbls,datasets:[{data:kVals,backgroundColor:colors,borderColor:'#0a0a0a',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#888',font:{size:11},boxWidth:12}}}}});
+  charts.kat=new Chart($('katChart').getContext('2d'),{type:'doughnut',data:{labels:kLbls,datasets:[{data:kVals,backgroundColor:colors,borderColor:getComputedStyle(document.documentElement).getPropertyValue('--bg2').trim()||'#fff',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:getComputedStyle(document.documentElement).getPropertyValue('--text2').trim()||'#888',font:{size:11},boxWidth:12}}}}});
 
   const ayMap={};
   klist.forEach(k=>{if(!k.tarih||!k.maliyet)return;const ay=k.tarih.slice(0,7);ayMap[ay]=(ayMap[ay]||0)+k.maliyet;});
@@ -828,7 +951,7 @@ function renderRapor(){
   const AYLAR=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
   const aLbls=aylar.map(a=>{const[yr,m]=a.split('-');return AYLAR[parseInt(m)-1]+' '+yr.slice(2)});
   if(charts.aylik)charts.aylik.destroy();
-  charts.aylik=new Chart($('aylikChart').getContext('2d'),{type:'bar',data:{labels:aLbls,datasets:[{data:aylar.map(a=>ayMap[a]),backgroundColor:'rgba(255,107,53,.6)',borderColor:'#ff6b35',borderWidth:1,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#888',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{color:'#888',font:{size:10},callback:v=>'₺'+v.toLocaleString()},grid:{color:'rgba(255,255,255,.04)'}}}}});
+  charts.aylik=new Chart($('aylikChart').getContext('2d'),{type:'bar',data:{labels:aLbls,datasets:[{data:aylar.map(a=>ayMap[a]),backgroundColor:'rgba(217,95,42,.55)',borderColor:'var(--accent)',borderWidth:1,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'var(--chart-tick)',font:{size:10}},grid:{color:'var(--chart-grid)'}},y:{ticks:{color:'var(--chart-tick)',font:{size:10},callback:v=>'₺'+v.toLocaleString()},grid:{color:'var(--chart-grid)'}}}}});
 }
 
 // ─── EXPORT / IMPORT ─────────────────────────────
