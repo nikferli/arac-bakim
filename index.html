@@ -172,6 +172,18 @@ select option{background:var(--bg3)}
 .empty-ic{font-size:38px;margin-bottom:10px}
 .empty-t{font-size:14px;line-height:1.7}
 
+/* Arama & Filtre */
+.search-bar{display:flex;gap:8px;padding:10px 14px 0;flex-shrink:0}
+.search-inp{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;font-size:14px;outline:none;transition:border-color .15s}
+.search-inp:focus{border-color:var(--accent)}
+.filter-chips{display:flex;gap:6px;padding:8px 14px 0;overflow-x:auto;flex-shrink:0}
+.filter-chips::-webkit-scrollbar{height:0}
+.fchip{flex-shrink:0;padding:5px 11px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;font-size:12px;color:var(--text2);cursor:pointer;transition:all .15s;font-family:var(--mono)}
+.fchip.active{border-color:var(--accent);color:var(--accent);background:rgba(217,95,42,.07)}
+.sort-row{display:flex;align-items:center;justify-content:flex-end;padding:6px 14px 0;flex-shrink:0}
+.sort-sel{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;color:var(--text2);outline:none;font-family:var(--mono)}
+.results-count{font-size:11px;color:var(--text3);font-family:var(--mono);padding:6px 14px 0;flex-shrink:0}
+
 /* Login screen */
 #login-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;z-index:500}
 #login-screen.hidden{display:none}
@@ -242,6 +254,18 @@ select option{background:var(--bg3)}
       <button class="btn-acc btn-sm" onclick="showView('ekle')">+ Ekle</button>
     </div>
     <div id="vsel-bar" class="vsel"></div>
+    <div class="search-bar">
+      <input class="search-inp" id="search-inp" placeholder="🔍 Ara..." oninput="renderAna()" autocomplete="off">
+    </div>
+    <div class="filter-chips" id="filter-chips"></div>
+    <div class="sort-row">
+      <select class="sort-sel" id="sort-sel" onchange="renderAna()">
+        <option value="yeni">En yeni</option>
+        <option value="eski">En eski</option>
+        <option value="maliyet">En yüksek maliyet</option>
+        <option value="durum">Duruma göre</option>
+      </select>
+    </div>
     <div class="tabs">
       <button class="tab active" onclick="setTab(this,'tumu')">Tümü</button>
       <button class="tab" onclick="setTab(this,'bekleyen')">Bekleyen</button>
@@ -638,6 +662,8 @@ function statusBadge(k){
 }
 
 // ─── ANA RENDER ──────────────────────────────────
+let selKat='tumu';
+
 function renderAna(){
   const bar=$('vsel-bar');
   bar.innerHTML=araclar.map(a=>`
@@ -654,6 +680,16 @@ function renderAna(){
   $('s-total').textContent=list.length;
   $('s-bek').textContent=list.filter(k=>!k.tamamlandi).length;
 
+  // Kategori filtre chips — sadece mevcut listede olan kategoriler
+  const aktifKatlar=[...new Set(list.map(k=>k.kat))];
+  $('filter-chips').innerHTML=
+    `<div class="fchip${selKat==='tumu'?' active':''}" onclick="setKat('tumu')">Tümü</div>`+
+    aktifKatlar.map(kat=>{
+      const c=catInfo(kat);
+      return`<div class="fchip${selKat===kat?' active':''}" onclick="setKat('${kat}')">${c.ic} ${c.lb}</div>`;
+    }).join('');
+
+  // Uyarılar
   const yaklaşan=list.filter(k=>{
     const a=araclar.find(x=>x.id===k.arac_id);const km=a?a.km:0;
     if(k.tamamlandi&&k.skm&&km>=k.skm-1500)return true;
@@ -663,12 +699,38 @@ function renderAna(){
   });
   $('alert-box').innerHTML=yaklaşan.length?`<div class="alert"><div class="alert-t">⚠ Dikkat Gerektiren</div>${yaklaşan.map(k=>`<div class="alert-item">${catInfo(k.kat).ic} ${k.baslik}</div>`).join('')}</div>`:'';
 
+  // Tab filtre
   let filtered=list;
   if(curTab==='bekleyen')filtered=filtered.filter(k=>!k.tamamlandi);
   if(curTab==='tamamlandi')filtered=filtered.filter(k=>k.tamamlandi);
 
+  // Kategori filtre
+  if(selKat!=='tumu')filtered=filtered.filter(k=>k.kat===selKat);
+
+  // Metin arama
+  const q=($('search-inp')?$('search-inp').value:'').trim().toLowerCase();
+  if(q){
+    filtered=filtered.filter(k=>
+      (k.baslik||'').toLowerCase().includes(q)||
+      (k.notlar||'').toLowerCase().includes(q)||
+      (k.servis||'').toLowerCase().includes(q)||
+      (k.tarih||'').includes(q)
+    );
+  }
+
+  // Sıralama
+  const sort=$('sort-sel')?$('sort-sel').value:'yeni';
+  if(sort==='eski')filtered=[...filtered].sort((a,b)=>new Date(a.tarih)-new Date(b.tarih));
+  else if(sort==='yeni')filtered=[...filtered].sort((a,b)=>new Date(b.tarih)-new Date(a.tarih));
+  else if(sort==='maliyet')filtered=[...filtered].sort((a,b)=>(b.maliyet||0)-(a.maliyet||0));
+  else if(sort==='durum')filtered=[...filtered].sort((a,b)=>Number(a.tamamlandi)-Number(b.tamamlandi));
+
   const el=$('kayit-list');
-  if(!filtered.length){el.innerHTML=`<div class="empty"><div class="empty-ic">🔧</div><div class="empty-t">Kayıt yok.<br>+ Ekle ile başlayın.</div></div>`;return;}
+  if(!filtered.length){
+    const mesaj=q?`"${q}" için sonuç bulunamadı`:'Kayıt yok. + Ekle ile başlayın.';
+    el.innerHTML=`<div class="empty"><div class="empty-ic">${q?'🔍':'🔧'}</div><div class="empty-t">${mesaj}</div></div>`;
+    return;
+  }
   el.innerHTML=filtered.map(k=>{
     const a=araclar.find(x=>x.id===k.arac_id);
     const uzunNotlar=k.notlar&&k.notlar.length>60;
@@ -681,7 +743,8 @@ function renderAna(){
           <div class="c-title">${k.baslik}</div>
           <div class="c-meta">${statusBadge(k)}<span style="font-size:11px;color:var(--text2)">${fmtDate(k.tarih)}</span>${k.maliyet?`<span style="font-size:11px;color:var(--accent2)">${fmtTL(k.maliyet)}</span>`:''}</div>
           ${k.km?`<div class="c-km">Yapılan: ${fmtKm(k.km)}</div>`:''}
-          ${k.skm||k.starih?`<div class="c-km" style="color:var(--accent)">Sonraki: ${k.skm?fmtKm(k.skm):''}${k.skm&&k.starih?' · ':''}${k.starih?fmtDate(k.starih):''}</div>`:''}          ${k.servis?`<div class="c-note" id="servis-${k.id}">📍 ${k.servis}</div>`:''}
+          ${k.skm||k.starih?`<div class="c-km" style="color:var(--accent)">Sonraki: ${k.skm?fmtKm(k.skm):''}${k.skm&&k.starih?' · ':''}${k.starih?fmtDate(k.starih):''}</div>`:''}
+          ${k.servis?`<div class="c-note" id="servis-${k.id}">📍 ${k.servis}</div>`:''}
           ${k.notlar?`<div class="c-note" id="notlar-${k.id}">${k.notlar}</div>`:''}
           ${uzun?`<span class="c-expand" onclick="toggleExpand('${k.id}')">▼ Devamını gör</span>`:''}
           ${a&&araclar.length>1?`<div class="c-note" style="color:var(--text3)">${a.ikon} ${a.marka} ${a.model}</div>`:''}
@@ -698,7 +761,8 @@ function renderAna(){
   }).join('');
 }
 
-function selArac(id){selAracId=id;renderAna();}
+function setKat(kat){selKat=kat;renderAna();}
+function selArac(id){selAracId=id;selKat='tumu';if($('search-inp'))$('search-inp').value='';renderAna();}
 
 // ─── KART GENİŞLET ────────────────────────────────
 function toggleExpand(id){
