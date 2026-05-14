@@ -402,6 +402,7 @@ select option{background:var(--bg3)}
       <div class="fg"><label class="fl">Yıl</label><input type="number" class="fi" id="ma-yil" placeholder="2020"></div>
     </div>
     <div class="fg"><label class="fl">Plaka</label><input class="fi" id="ma-plaka" placeholder="34 ABC 123" style="text-transform:uppercase"></div>
+    <div class="fg"><label class="fl">Şase No</label><input class="fi" id="ma-sase" placeholder="WBA3A5C50DF000000" style="text-transform:uppercase"></div>
     <div class="fg"><label class="fl">Mevcut KM</label><input type="number" class="fi" id="ma-km" placeholder="50000"></div>
     <div style="display:flex;gap:8px;margin-top:6px">
       <button class="btn btn-full" onclick="closeModal('modal-arac')" style="flex:1">İptal</button>
@@ -832,6 +833,7 @@ function renderAraclar(){
         <div class="vc-name">${a.marka} ${a.model}${a.yil?' ('+a.yil+')':''}</div>
         ${a.plaka?`<span class="vc-plate">${a.plaka}</span>`:''}
         <div class="vc-km">${a.km?fmtKm(a.km):'KM girilmedi'}</div>
+        ${a.sase_no?`<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:3px">Şase: ${a.sase_no}</div>`:''}
       </div>
       <div class="vc-actions">
         <button class="btn btn-icon btn-sm" onclick="editArac('${a.id}')">✎</button>
@@ -846,8 +848,8 @@ function openAracModal(id){
   $('modal-arac-title').textContent=id?'Araç Düzenle':'Araç Ekle';
   if(id){
     const a=araclar.find(x=>x.id===id);
-    if(a){selIkon=a.ikon;$('ma-marka').value=a.marka||'';$('ma-model').value=a.model||'';$('ma-yil').value=a.yil||'';$('ma-plaka').value=a.plaka||'';$('ma-km').value=a.km||'';}
-  }else{['ma-marka','ma-model','ma-yil','ma-plaka','ma-km'].forEach(id=>$(id).value='');}
+    if(a){selIkon=a.ikon;$('ma-marka').value=a.marka||'';$('ma-model').value=a.model||'';$('ma-yil').value=a.yil||'';$('ma-plaka').value=a.plaka||'';$('ma-sase').value=a.sase_no||'';$('ma-km').value=a.km||'';}
+  }else{['ma-marka','ma-model','ma-yil','ma-plaka','ma-sase','ma-km'].forEach(id=>$(id).value='');}
   renderIkonList();
   $('modal-arac').classList.add('open');
 }
@@ -865,7 +867,7 @@ async function saveArac(){
   const id=$('ma-id').value;
   const btn=$('ma-save-btn');btn.disabled=true;btn.textContent='Kaydediliyor...';
   setSyncDot('syncing');
-  const row={ikon:selIkon,marka:$('ma-marka').value.trim(),model:$('ma-model').value.trim(),yil:$('ma-yil').value.trim(),plaka:$('ma-plaka').value.trim().toUpperCase(),km:parseInt($('ma-km').value)||0,user_id:USER.id};
+  const row={ikon:selIkon,marka:$('ma-marka').value.trim(),model:$('ma-model').value.trim(),yil:$('ma-yil').value.trim(),plaka:$('ma-plaka').value.trim().toUpperCase(),sase_no:$('ma-sase').value.trim().toUpperCase()||null,km:parseInt($('ma-km').value)||0,user_id:USER.id};
   const {data,error}=id
     ?await sb.from('araclar').update(row).eq('id',id).select()
     :await sb.from('araclar').insert({...row,id:uid()}).select();
