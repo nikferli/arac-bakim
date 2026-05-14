@@ -349,7 +349,13 @@ select option{background:var(--bg3)}
           <div class="fg"><label class="fl">Tarih *</label><input type="date" class="fi" id="e-tarih"></div>
           <div class="fg"><label class="fl">Yapılan KM</label><input type="number" class="fi" id="e-km" placeholder="45000"></div>
         </div>
-        <div class="fg"><label class="fl">Sonraki bakım KM</label><input type="number" class="fi" id="e-skm" placeholder="50000"></div>
+        <div class="fg"><label class="fl">Sonraki Bakım</label>
+          <div class="fr">
+            <div><input type="number" class="fi" id="e-skm" placeholder="KM (ör: 50000)"></div>
+            <div><input type="date" class="fi" id="e-starih"></div>
+          </div>
+          <div style="font-size:11px;color:var(--text2);margin-top:5px;font-family:var(--mono)">İkisini de, birini veya hiçbirini doldurmayabilirsiniz</div>
+        </div>
         <div class="fg"><label class="fl">Maliyet (₺)</label><input type="number" class="fi" id="e-maliyet" placeholder="0"></div>
         <div class="fg"><label class="fl">Servis / Usta</label><input class="fi" id="e-servis" placeholder="Servis adı veya usta"></div>
         <div class="fg"><label class="fl">Notlar</label><textarea class="fi" id="e-notlar" rows="3" placeholder="Kullanılan ürün, detaylar..."></textarea></div>
@@ -443,7 +449,13 @@ select option{background:var(--bg3)}
       <div class="fg"><label class="fl">Tarih *</label><input type="date" class="fi" id="ed-tarih"></div>
       <div class="fg"><label class="fl">Yapılan KM</label><input type="number" class="fi" id="ed-km" placeholder="45000"></div>
     </div>
-    <div class="fg"><label class="fl">Sonraki bakım KM</label><input type="number" class="fi" id="ed-skm" placeholder="50000"></div>
+    <div class="fg"><label class="fl">Sonraki Bakım</label>
+      <div class="fr">
+        <div><input type="number" class="fi" id="ed-skm" placeholder="KM (ör: 50000)"></div>
+        <div><input type="date" class="fi" id="ed-starih"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin-top:5px;font-family:var(--mono)">İkisini de, birini veya hiçbirini doldurmayabilirsiniz</div>
+    </div>
     <div class="fg"><label class="fl">Maliyet (₺)</label><input type="number" class="fi" id="ed-maliyet" placeholder="0"></div>
     <div class="fg"><label class="fl">Servis / Usta</label><input class="fi" id="ed-servis" placeholder="Servis adı veya usta"></div>
     <div class="fg"><label class="fl">Notlar</label><textarea class="fi" id="ed-notlar" rows="3" placeholder="Kullanılan ürün, detaylar..."></textarea></div>
@@ -602,8 +614,19 @@ function setTab(el,tab){
 function statusBadge(k){
   const ar=araclar.find(x=>x.id===k.arac_id);
   const km=ar?ar.km:0;
-  if(k.tamamlandi&&k.skm&&km>=k.skm)return`<span class="badge b-due">⚠ Vadesi geçti</span>`;
-  if(k.tamamlandi&&k.skm&&km>=k.skm-1500)return`<span class="badge b-warn">⏰ Yaklaşıyor</span>`;
+
+  // KM bazlı kontrol
+  if(k.tamamlandi&&k.skm){
+    if(km>=k.skm)return`<span class="badge b-due">⚠ KM geçti</span>`;
+    if(km>=k.skm-1500)return`<span class="badge b-warn">⏰ KM yaklaşıyor</span>`;
+  }
+  // Tarih bazlı kontrol (sonraki bakım tarihi)
+  if(k.tamamlandi&&k.starih){
+    const g=daysUntil(k.starih);
+    if(g<0)return`<span class="badge b-due">⚠ Tarih geçti</span>`;
+    if(g<30)return`<span class="badge b-warn">📅 ${g} gün kaldı</span>`;
+  }
+  // Bekleyen kayıt (yapılacak tarih)
   if(!k.tamamlandi){
     const g=daysUntil(k.tarih);
     if(g<0)return`<span class="badge b-due">Gecikmiş ${Math.abs(g)}g</span>`;
@@ -632,8 +655,9 @@ function renderAna(){
 
   const yaklaşan=list.filter(k=>{
     const a=araclar.find(x=>x.id===k.arac_id);const km=a?a.km:0;
-    if(k.tamamlandi&&k.skm)return km>=k.skm-1500;
-    if(!k.tamamlandi)return daysUntil(k.tarih)<30;
+    if(k.tamamlandi&&k.skm&&km>=k.skm-1500)return true;
+    if(k.tamamlandi&&k.starih&&daysUntil(k.starih)<30)return true;
+    if(!k.tamamlandi&&daysUntil(k.tarih)<30)return true;
     return false;
   });
   $('alert-box').innerHTML=yaklaşan.length?`<div class="alert"><div class="alert-t">⚠ Dikkat Gerektiren</div>${yaklaşan.map(k=>`<div class="alert-item">${catInfo(k.kat).ic} ${k.baslik}</div>`).join('')}</div>`:'';
@@ -655,8 +679,8 @@ function renderAna(){
         <div class="c-body">
           <div class="c-title">${k.baslik}</div>
           <div class="c-meta">${statusBadge(k)}<span style="font-size:11px;color:var(--text2)">${fmtDate(k.tarih)}</span>${k.maliyet?`<span style="font-size:11px;color:var(--accent2)">${fmtTL(k.maliyet)}</span>`:''}</div>
-          ${k.km?`<div class="c-km">${fmtKm(k.km)}${k.skm?' → '+fmtKm(k.skm):''}</div>`:''}
-          ${k.servis?`<div class="c-note" id="servis-${k.id}">📍 ${k.servis}</div>`:''}
+          ${k.km?`<div class="c-km">Yapılan: ${fmtKm(k.km)}</div>`:''}
+          ${k.skm||k.starih?`<div class="c-km" style="color:var(--accent)">Sonraki: ${k.skm?fmtKm(k.skm):''}${k.skm&&k.starih?' · ':''}${k.starih?fmtDate(k.starih):''}</div>`:''}          ${k.servis?`<div class="c-note" id="servis-${k.id}">📍 ${k.servis}</div>`:''}
           ${k.notlar?`<div class="c-note" id="notlar-${k.id}">${k.notlar}</div>`:''}
           ${uzun?`<span class="c-expand" onclick="toggleExpand('${k.id}')">▼ Devamını gör</span>`:''}
           ${a&&araclar.length>1?`<div class="c-note" style="color:var(--text3)">${a.ikon} ${a.marka} ${a.model}</div>`:''}
@@ -698,6 +722,7 @@ function openEditModal(id){
   $('ed-tarih').value=k.tarih||'';
   $('ed-km').value=k.km||'';
   $('ed-skm').value=k.skm||'';
+  $('ed-starih').value=k.starih||'';
   $('ed-maliyet').value=k.maliyet||'';
   $('ed-servis').value=k.servis||'';
   $('ed-notlar').value=k.notlar||'';
@@ -725,6 +750,7 @@ async function updateKayit(){
     kat:editCat,baslik,tarih,
     km:parseInt($('ed-km').value)||null,
     skm:parseInt($('ed-skm').value)||null,
+    starih:$('ed-starih').value||null,
     maliyet:parseFloat($('ed-maliyet').value)||null,
     servis:$('ed-servis').value.trim(),
     notlar:$('ed-notlar').value.trim(),
@@ -739,7 +765,7 @@ async function updateKayit(){
 // ─── KAYIT ────────────────────────────────────────
 function initEkle(){
   $('e-tarih').value=new Date().toISOString().split('T')[0];
-  ['e-baslik','e-km','e-skm','e-maliyet','e-servis','e-notlar'].forEach(id=>$(id).value='');
+  ['e-baslik','e-km','e-skm','e-starih','e-maliyet','e-servis','e-notlar'].forEach(id=>$(id).value='');
   $('e-done').checked=false;
   const sel=$('e-arac-sel');
   sel.innerHTML=araclar.map(a=>`<option value="${a.id}">${a.ikon} ${a.marka} ${a.model}</option>`).join('');
@@ -766,6 +792,7 @@ async function saveKayit(){
   const km=parseInt($('e-km').value)||null;
   const row={id:uid(),user_id:USER.id,arac_id:aracId,kat:selCat,baslik,tarih,
     km,skm:parseInt($('e-skm').value)||null,
+    starih:$('e-starih').value||null,
     maliyet:parseFloat($('e-maliyet').value)||null,
     servis:$('e-servis').value.trim(),
     notlar:$('e-notlar').value.trim(),
