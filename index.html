@@ -183,7 +183,29 @@ select option{background:var(--bg3)}
 .sort-sel{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;color:var(--text2);outline:none;font-family:var(--mono)}
 .results-count{font-size:11px;color:var(--text3);font-family:var(--mono);padding:6px 14px 0;flex-shrink:0}
 
-/* Login screen */
+/* Onboarding */
+.onboard{position:fixed;inset:0;background:var(--bg);z-index:600;display:flex;flex-direction:column;max-width:480px;margin:0 auto}
+.onboard.hidden{display:none}
+.ob-slides{flex:1;overflow:hidden;position:relative}
+.ob-slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center;opacity:0;transform:translateX(40px);transition:all .35s}
+.ob-slide.active{opacity:1;transform:translateX(0)}
+.ob-slide.exit{opacity:0;transform:translateX(-40px)}
+.ob-emoji{font-size:72px;margin-bottom:24px}
+.ob-title{font-size:24px;font-weight:600;letter-spacing:-0.3px;margin-bottom:12px}
+.ob-desc{font-size:15px;color:var(--text2);line-height:1.7;max-width:300px}
+.ob-footer{padding:24px 32px 40px;display:flex;flex-direction:column;gap:12px;align-items:center}
+.ob-dots{display:flex;gap:6px}
+.ob-dot{width:6px;height:6px;border-radius:50%;background:var(--border2);transition:all .25s}
+.ob-dot.active{width:20px;border-radius:3px;background:var(--accent)}
+.ob-actions{display:flex;gap:10px;width:100%}
+.ob-skip{flex:1;padding:12px;font-size:14px;color:var(--text2);border:1px solid var(--border2);border-radius:10px}
+.ob-next{flex:2;padding:12px;font-size:14px;font-weight:600;background:var(--accent);color:#fff;border-radius:10px;border:none}
+
+/* Şablon önerisi */
+.template-hint{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-top:6px}
+.template-hint-title{font-size:11px;color:var(--text2);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.template-chip{display:inline-flex;align-items:center;gap:5px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;margin:3px 3px 0 0;transition:all .15s}
+.template-chip:active{border-color:var(--accent);background:rgba(217,95,42,.07)}
 #login-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;z-index:500}
 #login-screen.hidden{display:none}
 .login-logo{font-size:64px;margin-bottom:16px}
@@ -203,6 +225,38 @@ select option{background:var(--bg3)}
 </style>
 </head>
 <body>
+
+<!-- ONBOARDING -->
+<div class="onboard hidden" id="onboarding">
+  <div class="ob-slides">
+    <div class="ob-slide active" id="ob-0">
+      <div class="ob-emoji">🚗</div>
+      <div class="ob-title">Araç Bakımınız<br>Artık Düzenli</div>
+      <div class="ob-desc">Tüm araçlarınızın bakım, yakıt ve gider geçmişini tek yerden takip edin. Hiçbir bakım gözünüzden kaçmasın.</div>
+    </div>
+    <div class="ob-slide" id="ob-1">
+      <div class="ob-emoji">🔔</div>
+      <div class="ob-title">Zamanında Uyarı,<br>Sıfır Sürpriz</div>
+      <div class="ob-desc">Yaklaşan bakımlar, geçen muayeneler, dolmak üzere olan lastikler — hepsi için otomatik uyarı alın.</div>
+    </div>
+    <div class="ob-slide" id="ob-2">
+      <div class="ob-emoji">☁️</div>
+      <div class="ob-title">Her Cihazda<br>Senkronize</div>
+      <div class="ob-desc">Telefonda girdiğiniz kayıt laptopunuzda, laptoptan eklediğiniz araç telefonunuzda anında görünür.</div>
+    </div>
+  </div>
+  <div class="ob-footer">
+    <div class="ob-dots">
+      <div class="ob-dot active" id="dot-0"></div>
+      <div class="ob-dot" id="dot-1"></div>
+      <div class="ob-dot" id="dot-2"></div>
+    </div>
+    <div class="ob-actions">
+      <button class="ob-skip" onclick="finishOnboard()">Atla</button>
+      <button class="ob-next" id="ob-next-btn" onclick="obNext()">Devam →</button>
+    </div>
+  </div>
+</div>
 
 <!-- LOADING -->
 <div id="loading-screen">
@@ -363,6 +417,10 @@ select option{background:var(--bg3)}
         <div class="fg">
           <label class="fl">Kategori</label>
           <div class="catgrid" id="catgrid"></div>
+          <div id="template-hint" class="template-hint" style="display:none">
+            <div class="template-hint-title">⚡ Hızlı Şablonlar</div>
+            <div id="template-chips"></div>
+          </div>
         </div>
         <div class="fg">
           <label class="fl">Başlık *</label>
@@ -826,6 +884,92 @@ async function updateKayit(){
   await loadAll();setSyncDot('ok');closeModal('modal-edit');renderAna();toast('Kayıt güncellendi ✓');
 }
 
+// ─── ONBOARDING ──────────────────────────────────
+let obStep=0;
+
+function showOnboarding(){
+  $('onboarding').classList.remove('hidden');
+}
+function finishOnboard(){
+  $('onboarding').classList.add('hidden');
+  localStorage.setItem('ob_done','1');
+}
+function obNext(){
+  if(obStep>=2){finishOnboard();return;}
+  const cur=$('ob-'+obStep);
+  cur.classList.add('exit');
+  setTimeout(()=>cur.classList.remove('active','exit'),350);
+  obStep++;
+  const next=$('ob-'+obStep);
+  next.classList.add('active');
+  // dots
+  document.querySelectorAll('.ob-dot').forEach((d,i)=>d.classList.toggle('active',i===obStep));
+  if(obStep===2)$('ob-next-btn').textContent='Başla 🚀';
+}
+
+// ─── ŞABLONLAR ───────────────────────────────────
+const TEMPLATES={
+  yag:[
+    {lb:'Motor Yağı Değişimi',skm:10000},
+    {lb:'Diferansiyel Yağı',skm:30000},
+    {lb:'Şanzıman Yağı',skm:60000},
+  ],
+  lastik:[
+    {lb:'Lastik Rotasyonu',skm:10000},
+    {lb:'Yaz Lastik Takımı',skm:null},
+    {lb:'Kış Lastik Takımı',skm:null},
+    {lb:'Lastik Balans',skm:10000},
+  ],
+  fren:[
+    {lb:'Ön Fren Balata',skm:30000},
+    {lb:'Arka Fren Balata',skm:40000},
+    {lb:'Fren Diski Değişimi',skm:60000},
+    {lb:'Fren Hidroliği',skm:40000},
+  ],
+  filtre:[
+    {lb:'Hava Filtresi',skm:15000},
+    {lb:'Polen Filtresi',skm:15000},
+    {lb:'Yakıt Filtresi',skm:30000},
+    {lb:'Yağ Filtresi',skm:10000},
+  ],
+  temizlik:[
+    {lb:'Detaylı İç Temizlik',skm:null},
+    {lb:'Motor Yıkama',skm:null},
+    {lb:'Boya Koruma / Pasta',skm:null},
+    {lb:'Cam Filmi',skm:null},
+  ],
+  muayene:[
+    {lb:'Araç Muayenesi',skm:null,starih:true},
+    {lb:'Egzoz Muayenesi',skm:null,starih:true},
+    {lb:'LPG Muayenesi',skm:null,starih:true},
+  ],
+  akü:[
+    {lb:'Akü Değişimi',skm:null},
+    {lb:'Akü Kontrolü',skm:20000},
+  ],
+  diger:[
+    {lb:'Triger Seti',skm:60000},
+    {lb:'Buji Değişimi',skm:30000},
+    {lb:'Antifriz Değişimi',skm:40000},
+    {lb:'Klima Gazı',skm:null},
+    {lb:'Amortisör Kontrolü',skm:50000},
+  ],
+};
+
+function applyTemplate(t){
+  $('e-baslik').value=t.lb;
+  if(t.skm){
+    const mevcutKm=araclar.find(a=>a.id===$('e-arac-sel').value)?.km||0;
+    $('e-skm').value=mevcutKm?mevcutKm+t.skm:t.skm;
+  }
+  if(t.starih){
+    // Bir yıl sonrasını öner
+    const d=new Date();d.setFullYear(d.getFullYear()+1);
+    $('e-starih').value=d.toISOString().split('T')[0];
+  }
+  $('e-baslik').focus();
+}
+
 // ─── KAYIT ────────────────────────────────────────
 function initEkle(){
   $('e-tarih').value=new Date().toISOString().split('T')[0];
@@ -839,10 +983,23 @@ function initEkle(){
 
 function renderCatGrid(){
   $('catgrid').innerHTML=CATS.map(c=>`
-    <div class="catbtn${selCat===c.id?' sel':''}" onclick="selCat='${c.id}';renderCatGrid()">
+    <div class="catbtn${selCat===c.id?' sel':''}" onclick="selCat='${c.id}';renderCatGrid();renderTemplates()">
       <div class="catbtn-ic">${c.ic}</div>
       <div class="catbtn-lb">${c.lb}</div>
     </div>`).join('');
+  renderTemplates();
+}
+
+function renderTemplates(){
+  const hint=$('template-hint');
+  const chips=$('template-chips');
+  if(!hint||!chips)return;
+  const list=TEMPLATES[selCat];
+  if(!list||!list.length){hint.style.display='none';return;}
+  hint.style.display='block';
+  chips.innerHTML=list.map(t=>
+    `<span class="template-chip" onclick='applyTemplate(${JSON.stringify(t)})'>⚡ ${t.lb}${t.skm?' +'+t.skm.toLocaleString('tr-TR')+'km':''}</span>`
+  ).join('');
 }
 
 async function saveKayit(){
@@ -1082,6 +1239,10 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catc
 
 // ─── BAŞLATMA ────────────────────────────────────
 async function init(){
+  // Onboarding — sadece ilk kez göster
+  if(!localStorage.getItem('ob_done')){
+    showOnboarding();
+  }
   showLoading();
   const {data:{session}}=await sb.auth.getSession();
   if(session){
