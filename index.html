@@ -201,6 +201,20 @@ select option{background:var(--bg3)}
 .ob-skip{flex:1;padding:12px;font-size:14px;color:var(--text2);border:1px solid var(--border2);border-radius:10px}
 .ob-next{flex:2;padding:12px;font-size:14px;font-weight:600;background:var(--accent);color:#fff;border-radius:10px;border:none}
 
+/* Belge kartı */
+.belge-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
+.belge-row{display:flex;align-items:center;gap:12px}
+.belge-icon{font-size:28px;flex-shrink:0;width:44px;height:44px;background:var(--bg3);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.belge-body{flex:1;min-width:0}
+.belge-title{font-size:14px;font-weight:500;margin-bottom:4px}
+.belge-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px}
+.belge-sub{font-size:12px;color:var(--text2)}
+.belge-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.belge-countdown{font-family:var(--mono);font-size:13px;font-weight:500}
+.belge-countdown.ok{color:var(--ok)}
+.belge-countdown.warn{color:var(--warn)}
+.belge-countdown.due{color:var(--danger)}
+
 /* Şablon önerisi */
 .template-hint{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-top:6px}
 .template-hint-title{font-size:11px;color:var(--text2);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
@@ -401,6 +415,20 @@ select option{background:var(--bg3)}
     <div class="scroll"><div class="pad"><div id="arac-list"></div></div></div>
   </div>
 
+  <!-- BELGELER VIEW -->
+  <div class="view" id="view-belgeler">
+    <div class="hdr">
+      <div class="hdr-title">Belgeler & Sigortalar</div>
+      <button class="btn-acc btn-sm" onclick="openBelgeModal()">+ Ekle</button>
+    </div>
+    <div class="scroll">
+      <div class="pad">
+        <div id="belge-uyari-box"></div>
+        <div id="belge-list"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- EKLE VIEW -->
   <div class="view" id="view-ekle">
     <div class="hdr">
@@ -459,6 +487,9 @@ select option{background:var(--bg3)}
     <button class="nav-btn" id="nav-yakit" onclick="showView('yakit')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 22V8l9-6 9 6v14"/><path d="M10 22V12h4v10"/><path d="M14 6.5A2.5 2.5 0 0016.5 9v5a1.5 1.5 0 003 0V8l-2-2"/></svg>Yakıt
     </button>
+    <button class="nav-btn" id="nav-belgeler" onclick="showView('belgeler')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Belgeler
+    </button>
     <button class="nav-btn" id="nav-rapor" onclick="showView('rapor')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Rapor
     </button>
@@ -513,6 +544,38 @@ select option{background:var(--bg3)}
 </div>
 
 <div id="toast" class="toast"></div>
+
+<!-- BELGE MODAL -->
+<div class="modal" id="modal-belge">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-belge-title">Belge / Sigorta Ekle</div>
+    <input type="hidden" id="mb-id">
+    <div class="fg">
+      <label class="fl">Tür</label>
+      <div class="catgrid" id="belge-tip-grid"></div>
+    </div>
+    <div class="fg"><label class="fl">Araç</label><select class="fi" id="mb-arac"></select></div>
+    <div class="fg"><label class="fl">Başlık</label><input class="fi" id="mb-baslik" placeholder="Ör: Trafik Sigortası 2025"></div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Bitiş Tarihi *</label><input type="date" class="fi" id="mb-bitis"></div>
+      <div class="fg">
+        <label class="fl">Hatırlatma</label>
+        <select class="fi" id="mb-hatirlatma">
+          <option value="7">7 gün önce</option>
+          <option value="14">14 gün önce</option>
+          <option value="30" selected>30 gün önce</option>
+          <option value="60">60 gün önce</option>
+          <option value="90">90 gün önce</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Notlar</label><textarea class="fi" id="mb-notlar" rows="2" placeholder="Acente, poliçe no..."></textarea></div>
+    <div style="display:flex;gap:8px;margin-top:6px">
+      <button class="btn btn-full" onclick="closeModal('modal-belge')" style="flex:1">İptal</button>
+      <button class="btn-acc btn-full" id="mb-save-btn" onclick="saveBelge()" style="flex:2">Kaydet</button>
+    </div>
+  </div>
+</div>
 
 <!-- DÜZENLE MODAL -->
 <div class="modal" id="modal-edit">
@@ -576,7 +639,7 @@ const CATS = [
 
 // ─── STATE ───────────────────────────────────────
 let USER = null;
-let araclar = [], kayitlar = [], yakitlar = [];
+let araclar = [], kayitlar = [], yakitlar = [], belgeler = [];
 let selAracId = null, selCat = 'yag', selIkon = '🚗', curTab = 'tumu';
 let charts = {}, isLoginMode = true;
 
@@ -659,14 +722,16 @@ async function loadAll(){
   setSyncDot('syncing');
   try{
     const uid=USER.id;
-    const [a,k,y]=await Promise.all([
+    const [a,k,y,b]=await Promise.all([
       sb.from('araclar').select('*').eq('user_id',uid).order('created_at'),
       sb.from('kayitlar').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
       sb.from('yakitlar').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
+      sb.from('belgeler').select('*').eq('user_id',uid).order('bitis_tarihi'),
     ]);
     araclar=a.data||[];
     kayitlar=k.data||[];
     yakitlar=y.data||[];
+    belgeler=b.data||[];
     if(!selAracId&&araclar.length)selAracId=araclar[0].id;
     setSyncDot('ok');
   }catch(e){setSyncDot('err');toast('Bağlantı hatası!');}
@@ -682,6 +747,7 @@ function showView(v){
   if(v==='yakit')renderYakit();
   if(v==='rapor')renderRapor();
   if(v==='araclar')renderAraclar();
+  if(v==='belgeler')renderBelgeler();
   if(v==='ekle')initEkle();
 }
 
@@ -746,7 +812,7 @@ function renderAna(){
       return`<div class="fchip${selKat===kat?' active':''}" onclick="setKat('${kat}')">${c.ic} ${c.lb}</div>`;
     }).join('');
 
-  // Uyarılar
+  // Uyarılar — bakım + belgeler
   const yaklaşan=list.filter(k=>{
     const a=araclar.find(x=>x.id===k.arac_id);const km=a?a.km:0;
     if(k.tamamlandi&&k.skm&&km>=k.skm-1500)return true;
@@ -754,7 +820,14 @@ function renderAna(){
     if(!k.tamamlandi&&daysUntil(k.tarih)<30)return true;
     return false;
   });
-  $('alert-box').innerHTML=yaklaşan.length?`<div class="alert"><div class="alert-t">⚠ Dikkat Gerektiren</div>${yaklaşan.map(k=>`<div class="alert-item">${catInfo(k.kat).ic} ${k.baslik}</div>`).join('')}</div>`:'';
+  const belgeUyari=belgeler.filter(b=>
+    (!selAracId||b.arac_id===selAracId)&&daysUntil(b.bitis_tarihi)<=b.hatirlatma_gun
+  );
+  const tumUyari=[
+    ...yaklaşan.map(k=>`${catInfo(k.kat).ic} ${k.baslik}`),
+    ...belgeUyari.map(b=>`${belgeInfo(b.tip).ic} ${b.baslik}`)
+  ];
+  $('alert-box').innerHTML=tumUyari.length?`<div class="alert"><div class="alert-t">⚠ Dikkat Gerektiren</div>${tumUyari.map(t=>`<div class="alert-item">${t}</div>`).join('')}</div>`:'';
 
   // Tab filtre
   let filtered=list;
@@ -1228,6 +1301,133 @@ function importData(input){
     input.value='';
   };
   r.readAsText(file);
+}
+
+// ─── BELGELER ─────────────────────────────────────
+const BELGE_TIPLERI=[
+  {id:'trafik',lb:'Trafik Sigortası',ic:'🛡️'},
+  {id:'kasko',lb:'Kasko',ic:'🔒'},
+  {id:'muayene',lb:'Araç Muayenesi',ic:'📋'},
+  {id:'egzoz',lb:'Egzoz Muayenesi',ic:'💨'},
+  {id:'lpg',lb:'LPG Muayenesi',ic:'⛽'},
+  {id:'vergi',lb:'Motorlu Taşıt Vergisi',ic:'🏛️'},
+  {id:'diger',lb:'Diğer',ic:'📄'},
+];
+let selBelgeTip='trafik';
+
+function belgeInfo(id){return BELGE_TIPLERI.find(t=>t.id===id)||{ic:'📄',lb:'Diğer'};}
+
+function openBelgeModal(id){
+  selBelgeTip='trafik';
+  $('mb-id').value=id||'';
+  $('modal-belge-title').textContent=id?'Belge Düzenle':'Belge / Sigorta Ekle';
+  if(id){
+    const b=belgeler.find(x=>x.id===id);
+    if(b){
+      selBelgeTip=b.tip;
+      $('mb-baslik').value=b.baslik||'';
+      $('mb-bitis').value=b.bitis_tarihi||'';
+      $('mb-hatirlatma').value=b.hatirlatma_gun||30;
+      $('mb-notlar').value=b.notlar||'';
+    }
+  }else{
+    ['mb-baslik','mb-bitis','mb-notlar'].forEach(i=>$(i).value='');
+    $('mb-hatirlatma').value=30;
+  }
+  const sel=$('mb-arac');
+  sel.innerHTML=araclar.map(a=>`<option value="${a.id}">${a.ikon} ${a.marka} ${a.model}</option>`).join('');
+  if(selAracId)sel.value=selAracId;
+  if(id){const b=belgeler.find(x=>x.id===id);if(b)sel.value=b.arac_id;}
+  renderBelgeTipGrid();
+  $('modal-belge').classList.add('open');
+}
+
+function renderBelgeTipGrid(){
+  $('belge-tip-grid').innerHTML=BELGE_TIPLERI.map(t=>`
+    <div class="catbtn${selBelgeTip===t.id?' sel':''}" onclick="selBelgeTip='${t.id}';renderBelgeTipGrid()">
+      <div class="catbtn-ic">${t.ic}</div>
+      <div class="catbtn-lb">${t.lb}</div>
+    </div>`).join('');
+}
+
+async function saveBelge(){
+  const bitis=$('mb-bitis').value;
+  if(!bitis){toast('Bitiş tarihi zorunlu!');return;}
+  const id=$('mb-id').value;
+  const btn=$('mb-save-btn');btn.disabled=true;btn.textContent='Kaydediliyor...';
+  setSyncDot('syncing');
+  const t=belgeInfo(selBelgeTip);
+  const row={
+    tip:selBelgeTip,
+    arac_id:$('mb-arac').value,
+    baslik:$('mb-baslik').value.trim()||t.lb,
+    bitis_tarihi:bitis,
+    hatirlatma_gun:parseInt($('mb-hatirlatma').value)||30,
+    notlar:$('mb-notlar').value.trim(),
+    user_id:USER.id,
+  };
+  const {error}=id
+    ?await sb.from('belgeler').update(row).eq('id',id)
+    :await sb.from('belgeler').insert({...row,id:uid()});
+  btn.disabled=false;btn.textContent='Kaydet';
+  if(error){setSyncDot('err');toast('Hata: '+error.message);return;}
+  await loadAll();setSyncDot('ok');closeModal('modal-belge');renderBelgeler();toast('Belge kaydedildi ✓');
+}
+
+async function delBelge(id){
+  if(!confirm('Bu belgeyi silmek istiyorsunuz?'))return;
+  await sb.from('belgeler').delete().eq('id',id);
+  await loadAll();renderBelgeler();toast('Belge silindi');
+}
+
+function renderBelgeler(){
+  const list=selAracId?belgeler.filter(b=>b.arac_id===selAracId):belgeler;
+
+  // Uyarı kutusu
+  const yaklasan=list.filter(b=>daysUntil(b.bitis_tarihi)<=b.hatirlatma_gun);
+  const ub=$('belge-uyari-box');
+  ub.innerHTML=yaklasan.length?`<div class="alert">
+    <div class="alert-t">⚠ Yenilenmesi Gereken Belgeler</div>
+    ${yaklasan.map(b=>{
+      const g=daysUntil(b.bitis_tarihi);
+      return`<div class="alert-item">${belgeInfo(b.tip).ic} ${b.baslik} — ${g<0?'Süresi doldu!':g+' gün kaldı'}</div>`;
+    }).join('')}
+  </div>`:'';
+
+  const el=$('belge-list');
+  if(!list.length){
+    el.innerHTML=`<div class="empty"><div class="empty-ic">📋</div><div class="empty-t">Belge yok.<br>Sigorta, muayene, kasko<br>eklemek için + Ekle tıklayın.</div></div>`;
+    return;
+  }
+
+  el.innerHTML=list.map(b=>{
+    const g=daysUntil(b.bitis_tarihi);
+    const t=belgeInfo(b.tip);
+    const ar=araclar.find(a=>a.id===b.arac_id);
+    let countdownClass='ok',countdownText='';
+    if(g<0){countdownClass='due';countdownText='⚠ '+Math.abs(g)+' gün geçti';}
+    else if(g<=b.hatirlatma_gun){countdownClass='warn';countdownText='⏰ '+g+' gün kaldı';}
+    else{countdownText='✓ '+g+' gün kaldı';}
+
+    return`<div class="belge-card">
+      <div class="belge-row">
+        <div class="belge-icon">${t.ic}</div>
+        <div class="belge-body">
+          <div class="belge-title">${b.baslik}</div>
+          <div class="belge-meta">
+            <span class="badge ${g<0?'b-due':g<=b.hatirlatma_gun?'b-warn':'b-ok'}">${countdownText}</span>
+          </div>
+          <div class="belge-sub">Bitiş: ${fmtDate(b.bitis_tarihi)}</div>
+          ${ar&&araclar.length>1?`<div class="belge-sub">${ar.ikon} ${ar.marka} ${ar.model}</div>`:''}
+          ${b.notlar?`<div class="belge-sub" style="margin-top:3px">${b.notlar}</div>`:''}
+        </div>
+        <div class="c-actions">
+          <button class="btn btn-icon" onclick="openBelgeModal('${b.id}')">✎</button>
+          <button class="btn btn-icon btn-del" onclick="delBelge('${b.id}')">✕</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ─── MODAL ───────────────────────────────────────
