@@ -4,17 +4,21 @@
   "description": "Çoklu araç bakım, yakıt ve gider takip uygulaması",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0a0a0a",
-  "theme_color": "#ff6b35",
+  "background_color": "#D95F2A",
+  "theme_color": "#D95F2A",
   "orientation": "portrait",
   "icons": [
-    { "src": "./icons/icon-72x72.png",   "sizes": "72x72",   "type": "image/png" },
-    { "src": "./icons/icon-96x96.png",   "sizes": "96x96",   "type": "image/png" },
-    { "src": "./icons/icon-128x128.png", "sizes": "128x128", "type": "image/png" },
-    { "src": "./icons/icon-144x144.png", "sizes": "144x144", "type": "image/png" },
-    { "src": "./icons/icon-152x152.png", "sizes": "152x152", "type": "image/png", "purpose": "any" },
-    { "src": "./icons/icon-192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "./icons/icon-384x384.png", "sizes": "384x384", "type": "image/png" },
-    { "src": "./icons/icon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjEwMCIgZmlsbD0iI0Q5NUYyQSIvPjxyZWN0IHg9IjAiIHk9IjQxMCIgd2lkdGg9IjUxMiIgaGVpZ2h0PSIxMDIiIGZpbGw9IiNCODRFMjIiLz48cmVjdCB4PSIwIiB5PSIzOTAiIHdpZHRoPSI1MTIiIGhlaWdodD0iMzAiIGZpbGw9IiNCODRFMjIiLz48cmVjdCB4PSI3MiIgeT0iMjU1IiB3aWR0aD0iMzY4IiBoZWlnaHQ9IjEzNSIgcng9IjI4IiBmaWxsPSJ3aGl0ZSIvPjxyZWN0IHg9IjEyOCIgeT0iMTY1IiB3aWR0aD0iMjU2IiBoZWlnaHQ9IjExMiIgcng9IjIyIiBmaWxsPSJ3aGl0ZSIvPjxyZWN0IHg9IjE0NiIgeT0iMTgyIiB3aWR0aD0iMTAyIiBoZWlnaHQ9IjgwIiByeD0iMTIiIGZpbGw9IiNEOTVGMkEiIG9wYWNpdHk9IjAuMyIvPjxyZWN0IHg9IjI2NCIgeT0iMTgyIiB3aWR0aD0iMTAyIiBoZWlnaHQ9IjgwIiByeD0iMTIiIGZpbGw9IiNEOTVGMkEiIG9wYWNpdHk9IjAuMyIvPjxjaXJjbGUgY3g9IjE1MCIgY3k9IjM5MiIgcj0iNTQiIGZpbGw9IiMyMjIiLz48Y2lyY2xlIGN4PSIxNTAiIGN5PSIzOTIiIHI9IjMwIiBmaWxsPSIjOTk5Ii8+PGNpcmNsZSBjeD0iMTUwIiBjeT0iMzkyIiByPSIxMyIgZmlsbD0iIzIyMiIvPjxjaXJjbGUgY3g9IjM2MiIgY3k9IjM5MiIgcj0iNTQiIGZpbGw9IiMyMjIiLz48Y2lyY2xlIGN4PSIzNjIiIGN5PSIzOTIiIHI9IjMwIiBmaWxsPSIjOTk5Ii8+PGNpcmNsZSBjeD0iMzYyIiBjeT0iMzkyIiByPSIxMyIgZmlsbD0iIzIyMiIvPjxyZWN0IHg9Ijc0IiB5PSIyODIiIHdpZHRoPSI0MCIgaGVpZ2h0PSIyNCIgcng9IjgiIGZpbGw9IiNGRkQyM0YiLz48cmVjdCB4PSIzOTgiIHk9IjI4MiIgd2lkdGg9IjQwIiBoZWlnaHQ9IjI0IiByeD0iOCIgZmlsbD0iI2ZmNTU1NSIvPjwvc3ZnPg==",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjEwMCIgZmlsbD0iI0Q5NUYyQSIvPjxyZWN0IHg9IjAiIHk9IjQxMCIgd2lkdGg9IjUxMiIgaGVpZ2h0PSIxMDIiIGZpbGw9IiNCODRFMjIiLz48cmVjdCB4PSIwIiB5PSIzOTAiIHdpZHRoPSI1MTIiIGhlaWdodD0iMzAiIGZpbGw9IiNCODRFMjIiLz48cmVjdCB4PSI3MiIgeT0iMjU1IiB3aWR0aD0iMzY4IiBoZWlnaHQ9IjEzNSIgcng9IjI4IiBmaWxsPSJ3aGl0ZSIvPjxyZWN0IHg9IjEyOCIgeT0iMTY1IiB3aWR0aD0iMjU2IiBoZWlnaHQ9IjExMiIgcng9IjIyIiBmaWxsPSJ3aGl0ZSIvPjxyZWN0IHg9IjE0NiIgeT0iMTgyIiB3aWR0aD0iMTAyIiBoZWlnaHQ9IjgwIiByeD0iMTIiIGZpbGw9IiNEOTVGMkEiIG9wYWNpdHk9IjAuMyIvPjxyZWN0IHg9IjI2NCIgeT0iMTgyIiB3aWR0aD0iMTAyIiBoZWlnaHQ9IjgwIiByeD0iMTIiIGZpbGw9IiNEOTVGMkEiIG9wYWNpdHk9IjAuMyIvPjxjaXJjbGUgY3g9IjE1MCIgY3k9IjM5MiIgcj0iNTQiIGZpbGw9IiMyMjIiLz48Y2lyY2xlIGN4PSIxNTAiIGN5PSIzOTIiIHI9IjMwIiBmaWxsPSIjOTk5Ii8+PGNpcmNsZSBjeD0iMTUwIiBjeT0iMzkyIiByPSIxMyIgZmlsbD0iIzIyMiIvPjxjaXJjbGUgY3g9IjM2MiIgY3k9IjM5MiIgcj0iNTQiIGZpbGw9IiMyMjIiLz48Y2lyY2xlIGN4PSIzNjIiIGN5PSIzOTIiIHI9IjMwIiBmaWxsPSIjOTk5Ii8+PGNpcmNsZSBjeD0iMzYyIiBjeT0iMzkyIiByPSIxMyIgZmlsbD0iIzIyMiIvPjxyZWN0IHg9Ijc0IiB5PSIyODIiIHdpZHRoPSI0MCIgaGVpZ2h0PSIyNCIgcng9IjgiIGZpbGw9IiNGRkQyM0YiLz48cmVjdCB4PSIzOTgiIHk9IjI4MiIgd2lkdGg9IjQwIiBoZWlnaHQ9IjI0IiByeD0iOCIgZmlsbD0iI2ZmNTU1NSIvPjwvc3ZnPg==",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
   ]
 }
