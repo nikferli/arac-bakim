@@ -174,15 +174,21 @@ select option{background:var(--bg3)}
 .empty-t{font-size:14px;line-height:1.7}
 
 /* Arama & Filtre */
-.search-bar{display:flex;gap:8px;padding:10px 14px 0;flex-shrink:0}
+.search-bar{display:flex;gap:8px;padding:8px 14px;flex-shrink:0;align-items:center}
 .search-inp{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;font-size:14px;outline:none;transition:border-color .15s}
 .search-inp:focus{border-color:var(--accent)}
-.filter-chips{display:flex;flex-wrap:wrap;gap:6px;padding:8px 14px 4px;flex-shrink:0}
-.fchip{flex-shrink:0;white-space:nowrap;padding:5px 11px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;font-size:12px;color:var(--text2);cursor:pointer;transition:all .15s;font-family:var(--mono)}
+.filter-toggle-btn{position:relative;flex-shrink:0;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;color:var(--text2);transition:all .15s;cursor:pointer}
+.filter-toggle-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(217,95,42,.07)}
+.filter-badge{position:absolute;top:-4px;right:-4px;width:8px;height:8px;background:var(--accent);border-radius:50%;border:2px solid var(--bg)}
+.filter-panel{max-height:0;overflow:hidden;transition:max-height .28s ease;flex-shrink:0;background:var(--bg3);border-bottom:1px solid var(--border)}
+.filter-panel.open{max-height:240px}
+.filter-panel-inner{padding:10px 0 14px}
+.fp-label{font-size:10px;color:var(--text2);font-family:var(--mono);text-transform:uppercase;letter-spacing:.8px;padding:0 14px;margin-bottom:7px}
+.filter-chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px}
+.fchip{flex-shrink:0;white-space:nowrap;padding:5px 11px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;font-size:12px;color:var(--text2);cursor:pointer;transition:all .15s;font-family:var(--mono)}
 .fchip.active{border-color:var(--accent);color:var(--accent);background:rgba(217,95,42,.07)}
-.sort-row{display:flex;align-items:center;justify-content:flex-end;padding:6px 14px 0;flex-shrink:0}
-.sort-sel{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;color:var(--text2);outline:none;font-family:var(--mono)}
-.results-count{font-size:11px;color:var(--text3);font-family:var(--mono);padding:6px 14px 0;flex-shrink:0}
+.sort-chip{padding:5px 11px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;font-size:12px;color:var(--text2);cursor:pointer;transition:all .15s;font-family:var(--mono);white-space:nowrap}
+.sort-chip.active{border-color:var(--accent);color:var(--accent);background:rgba(217,95,42,.07)}
 
 /* Onboarding */
 .onboard{position:fixed;inset:0;background:var(--bg);z-index:600;display:flex;flex-direction:column;max-width:480px;margin:0 auto}
@@ -324,15 +330,23 @@ select option{background:var(--bg3)}
     <div id="vsel-bar" class="vsel"></div>
     <div class="search-bar">
       <input class="search-inp" id="search-inp" placeholder="🔍 Ara..." oninput="renderAna()" autocomplete="off">
+      <button class="filter-toggle-btn" id="filter-toggle-btn" onclick="toggleFilterPanel()" title="Filtrele & Sırala">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+        <span id="filter-badge" class="filter-badge" style="display:none"></span>
+      </button>
     </div>
-    <div class="filter-chips" id="filter-chips"></div>
-    <div class="sort-row">
-      <select class="sort-sel" id="sort-sel" onchange="renderAna()">
-        <option value="yeni">En yeni</option>
-        <option value="eski">En eski</option>
-        <option value="maliyet">En yüksek maliyet</option>
-        <option value="durum">Duruma göre</option>
-      </select>
+    <div class="filter-panel" id="filter-panel">
+      <div class="filter-panel-inner">
+        <div class="fp-label">Kategori</div>
+        <div class="filter-chips" id="filter-chips"></div>
+        <div class="fp-label" style="margin-top:10px">Sırala</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;padding:0 14px">
+          <button class="sort-chip active" data-sort="yeni" onclick="setSort(this,'yeni')">En yeni</button>
+          <button class="sort-chip" data-sort="eski" onclick="setSort(this,'eski')">En eski</button>
+          <button class="sort-chip" data-sort="maliyet" onclick="setSort(this,'maliyet')">En yüksek maliyet</button>
+          <button class="sort-chip" data-sort="durum" onclick="setSort(this,'durum')">Duruma göre</button>
+        </div>
+      </div>
     </div>
     <div class="tabs">
       <button class="tab active" onclick="setTab(this,'tumu')">Tümü</button>
@@ -850,7 +864,7 @@ function renderAna(){
   }
 
   // Sıralama
-  const sort=$('sort-sel')?$('sort-sel').value:'yeni';
+  const sort=curSort;
   if(sort==='eski')filtered=[...filtered].sort((a,b)=>new Date(a.tarih)-new Date(b.tarih));
   else if(sort==='yeni')filtered=[...filtered].sort((a,b)=>new Date(b.tarih)-new Date(a.tarih));
   else if(sort==='maliyet')filtered=[...filtered].sort((a,b)=>(b.maliyet||0)-(a.maliyet||0));
@@ -892,8 +906,38 @@ function renderAna(){
   }).join('');
 }
 
-function setKat(kat){selKat=kat;renderAna();}
-function selArac(id){selAracId=id;selKat='tumu';if($('search-inp'))$('search-inp').value='';renderAna();}
+let curSort='yeni';
+
+function toggleFilterPanel(){
+  const panel=$('filter-panel');
+  const btn=$('filter-toggle-btn');
+  const isOpen=panel.classList.contains('open');
+  panel.classList.toggle('open',!isOpen);
+  btn.classList.toggle('active',!isOpen);
+}
+
+function setSort(el,sort){
+  curSort=sort;
+  document.querySelectorAll('.sort-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  updateFilterBadge();
+  renderAna();
+}
+
+function setKat(kat){
+  selKat=kat;
+  updateFilterBadge();
+  renderAna();
+}
+
+function updateFilterBadge(){
+  const badge=$('filter-badge');
+  if(!badge)return;
+  const aktif=selKat!=='tumu'||curSort!=='yeni';
+  badge.style.display=aktif?'block':'none';
+}
+
+function selArac(id){selAracId=id;selKat='tumu';curSort='yeni';if($('search-inp'))$('search-inp').value='';updateFilterBadge();renderAna();}
 
 // ─── KART GENİŞLET ────────────────────────────────
 function toggleExpand(id){
