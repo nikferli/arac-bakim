@@ -13,6 +13,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Sans:ital,wght@0,400;0,500;0,600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 /* ── AYDINLIK TEMA ── */
@@ -390,7 +392,12 @@ select option{background:var(--bg3)}
 
   <!-- RAPOR VIEW -->
   <div class="view" id="view-rapor">
-    <div class="hdr"><div class="hdr-title">Raporlar</div></div>
+    <div class="hdr">
+      <div class="hdr-title">Raporlar</div>
+      <button class="btn-acc btn-sm" onclick="exportPDF()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>PDF
+      </button>
+    </div>
     <div class="scroll">
       <div class="pad">
         <div class="rsum">
@@ -416,6 +423,10 @@ select option{background:var(--bg3)}
             <input type="file" accept=".json" onchange="importData(this)" style="display:none">
           </label>
         </div>
+        <button class="io-btn btn-full" onclick="exportPDF()" style="margin-top:8px;justify-content:center">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg>
+          PDF Rapor İndir
+        </button>
         <button class="btn btn-full" onclick="signOut()" style="margin-top:6px;color:var(--danger)">Çıkış Yap</button>
       </div>
     </div>
@@ -1319,6 +1330,161 @@ function renderRapor(){
   const aLbls=aylar.map(a=>{const[yr,m]=a.split('-');return AYLAR[parseInt(m)-1]+' '+yr.slice(2)});
   if(charts.aylik)charts.aylik.destroy();
   charts.aylik=new Chart($('aylikChart').getContext('2d'),{type:'bar',data:{labels:aLbls,datasets:[{data:aylar.map(a=>ayMap[a]),backgroundColor:'rgba(217,95,42,.55)',borderColor:'var(--accent)',borderWidth:1,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'var(--chart-tick)',font:{size:10}},grid:{color:'var(--chart-grid)'}},y:{ticks:{color:'var(--chart-tick)',font:{size:10},callback:v=>'₺'+v.toLocaleString()},grid:{color:'var(--chart-grid)'}}}}});
+}
+
+// ─── PDF RAPOR ───────────────────────────────────
+function exportPDF(){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const ar=araclar.find(a=>a.id===selAracId);
+  const klist=selAracId?kayitlar.filter(k=>k.arac_id===selAracId):kayitlar;
+  const ylist=selAracId?yakitlar.filter(y=>y.arac_id===selAracId):yakitlar;
+  const blist=selAracId?belgeler.filter(b=>b.arac_id===selAracId):belgeler;
+  const thisYear=new Date().getFullYear();
+  const PAGE_W=210;
+  const MARGIN=14;
+  const ACCENT=[217,95,42];
+  const DARK=[30,30,30];
+  const GRAY=[120,120,120];
+  const LIGHT=[245,243,240];
+
+  let y=14;
+
+  // ── BAŞLIK BLOĞU ──
+  doc.setFillColor(...ACCENT);
+  doc.roundedRect(MARGIN,y,PAGE_W-MARGIN*2,28,4,4,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(16);doc.setFont('helvetica','bold');
+  doc.text('ARAÇ BAKIM RAPORU',PAGE_W/2,y+10,{align:'center'});
+  doc.setFontSize(9);doc.setFont('helvetica','normal');
+  doc.text(new Date().toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}),PAGE_W/2,y+18,{align:'center'});
+  y+=36;
+
+  // ── ARAÇ BİLGİLERİ ──
+  if(ar){
+    doc.setFillColor(...LIGHT);
+    doc.roundedRect(MARGIN,y,PAGE_W-MARGIN*2,30,3,3,'F');
+    doc.setTextColor(...DARK);
+    doc.setFontSize(11);doc.setFont('helvetica','bold');
+    doc.text(`${ar.marka} ${ar.model}`,MARGIN+4,y+8);
+    doc.setFontSize(8);doc.setFont('helvetica','normal');
+    doc.setTextColor(...GRAY);
+    const bilgiler=[
+      ar.yil?`Yıl: ${ar.yil}`:'',
+      ar.plaka?`Plaka: ${ar.plaka}`:'',
+      ar.km?`Mevcut KM: ${Number(ar.km).toLocaleString('tr-TR')}`:'',
+      ar.sase_no?`Şase: ${ar.sase_no}`:'',
+    ].filter(Boolean);
+    doc.text(bilgiler.join('   |   '),MARGIN+4,y+16);
+    y+=38;
+  }
+
+  // ── ÖZET KUTULARI ──
+  const toplam=klist.reduce((s,k)=>s+(k.maliyet||0),0);
+  const yillik=klist.filter(k=>k.tarih&&new Date(k.tarih).getFullYear()===thisYear).reduce((s,k)=>s+(k.maliyet||0),0);
+  const tamSayi=klist.filter(k=>k.tamamlandi).length;
+  const tamMaliyet=klist.filter(k=>k.tamamlandi&&k.maliyet);
+  const ort=tamMaliyet.length?tamMaliyet.reduce((s,k)=>s+(k.maliyet||0),0)/tamMaliyet.length:0;
+  const topYakit=ylist.reduce((s,y)=>s+(y.fiyat||0),0);
+
+  const kutu=(label,val,sub,x,bw)=>{
+    doc.setFillColor(...LIGHT);
+    doc.roundedRect(x,y,bw,20,3,3,'F');
+    doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(...GRAY);
+    doc.text(label.toUpperCase(),x+bw/2,y+5,{align:'center'});
+    doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(...ACCENT);
+    doc.text(val,x+bw/2,y+12,{align:'center'});
+    if(sub){doc.setFontSize(6);doc.setFont('helvetica','normal');doc.setTextColor(...GRAY);doc.text(sub,x+bw/2,y+17,{align:'center'});}
+  };
+  const bw=(PAGE_W-MARGIN*2-9)/4;
+  kutu('Toplam Gider',`${toplam.toLocaleString('tr-TR',{maximumFractionDigits:0})} ₺`,'Tüm zamanlar',MARGIN,bw);
+  kutu('Bu Yıl',`${yillik.toLocaleString('tr-TR',{maximumFractionDigits:0})} ₺`,String(thisYear),MARGIN+bw+3,bw);
+  kutu('Bakım Sayısı',String(tamSayi),'Tamamlanan',MARGIN+bw*2+6,bw);
+  kutu('Toplam Yakıt',`${topYakit.toLocaleString('tr-TR',{maximumFractionDigits:0})} ₺`,'',MARGIN+bw*3+9,bw);
+  y+=28;
+
+  // ── BAKIM KAYITLARI ──
+  if(klist.length){
+    doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(...DARK);
+    doc.text('Bakım Kayıtları',MARGIN,y);
+    y+=4;
+    doc.autoTable({
+      startY:y,
+      margin:{left:MARGIN,right:MARGIN},
+      headStyles:{fillColor:ACCENT,textColor:[255,255,255],fontSize:8,fontStyle:'bold',halign:'center'},
+      bodyStyles:{fontSize:7.5,textColor:DARK},
+      alternateRowStyles:{fillColor:LIGHT},
+      columnStyles:{0:{cellWidth:22},1:{cellWidth:48},2:{cellWidth:20,halign:'center'},3:{cellWidth:22,halign:'right'},4:{cellWidth:24,halign:'center'},5:{cellWidth:40}},
+      head:[['Tarih','Başlık','Kategori','Maliyet','KM','Notlar']],
+      body:klist.map(k=>[
+        fmtDate(k.tarih),
+        k.baslik||'',
+        catInfo(k.kat).lb,
+        k.maliyet?`${Number(k.maliyet).toLocaleString('tr-TR')} ₺`:'—',
+        k.km?Number(k.km).toLocaleString('tr-TR'):'—',
+        (k.servis?k.servis+' ':'')+(k.notlar||''),
+      ]),
+    });
+    y=doc.lastAutoTable.finalY+8;
+  }
+
+  // ── YAKIT KAYITLARI ──
+  if(ylist.length){
+    if(y>250){doc.addPage();y=14;}
+    doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(...DARK);
+    doc.text('Yakıt Kayıtları',MARGIN,y);y+=4;
+    const topLitre=ylist.reduce((s,y)=>s+(y.litre||0),0);
+    doc.autoTable({
+      startY:y,
+      margin:{left:MARGIN,right:MARGIN},
+      headStyles:{fillColor:[184,131,26],textColor:[255,255,255],fontSize:8,fontStyle:'bold',halign:'center'},
+      bodyStyles:{fontSize:7.5,textColor:DARK},
+      alternateRowStyles:{fillColor:LIGHT},
+      foot:[['','','Toplam',`${topLitre.toFixed(1)} lt`,`${ylist.reduce((s,y)=>s+(y.fiyat||0),0).toLocaleString('tr-TR',{maximumFractionDigits:0})} ₺`,'']],
+      footStyles:{fillColor:LIGHT,textColor:DARK,fontStyle:'bold',fontSize:7.5},
+      head:[['Tarih','KM','Not','Litre','Tutar','L/100km']],
+      body:ylist.map((y,i,arr)=>{
+        const prev=arr.slice(0,i).filter(x=>x.km).pop();
+        let ort='—';
+        if(prev&&y.km&&y.km>prev.km){ort=((y.litre/(y.km-prev.km))*100).toFixed(1);}
+        return[fmtDate(y.tarih),y.km?Number(y.km).toLocaleString('tr-TR'):'—',y.not_||'',`${y.litre} lt`,y.fiyat?`${Number(y.fiyat).toLocaleString('tr-TR')} ₺`:'—',ort];
+      }),
+    });
+    y=doc.lastAutoTable.finalY+8;
+  }
+
+  // ── BELGELER & SİGORTALAR ──
+  if(blist.length){
+    if(y>250){doc.addPage();y=14;}
+    doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(...DARK);
+    doc.text('Belgeler & Sigortalar',MARGIN,y);y+=4;
+    doc.autoTable({
+      startY:y,
+      margin:{left:MARGIN,right:MARGIN},
+      headStyles:{fillColor:[60,100,180],textColor:[255,255,255],fontSize:8,fontStyle:'bold',halign:'center'},
+      bodyStyles:{fontSize:7.5,textColor:DARK},
+      alternateRowStyles:{fillColor:LIGHT},
+      head:[['Tür','Başlık','Bitiş Tarihi','Kalan Gün','Durum']],
+      body:blist.map(b=>{
+        const g=daysUntil(b.bitis_tarihi);
+        const durum=g<0?'Süresi Doldu':g<b.hatirlatma_gun?'Yaklaşıyor':'Geçerli';
+        return[belgeInfo(b.tip).lb,b.baslik,fmtDate(b.bitis_tarihi),g<0?'Geçti':String(g),durum];
+      }),
+    });
+  }
+
+  // ── ALT BİLGİ ──
+  const pageCount=doc.internal.getNumberOfPages();
+  for(let i=1;i<=pageCount;i++){
+    doc.setPage(i);
+    doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(...GRAY);
+    doc.text(`Araç Bakım Takip — Sayfa ${i}/${pageCount}`,PAGE_W/2,290,{align:'center'});
+  }
+
+  // İndir
+  const dosyaAdi=`arac-bakim-rapor-${ar?ar.plaka||ar.marka:'tum'}-${new Date().toISOString().split('T')[0]}.pdf`;
+  doc.save(dosyaAdi);
+  toast('PDF indiriliyor ✓');
 }
 
 // ─── EXPORT / IMPORT ─────────────────────────────
