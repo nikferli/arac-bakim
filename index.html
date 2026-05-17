@@ -210,6 +210,21 @@ select option{background:var(--bg3)}
 .ob-skip{flex:1;padding:12px;font-size:14px;color:var(--text2);border:1px solid var(--border2);border-radius:10px}
 .ob-next{flex:2;padding:12px;font-size:14px;font-weight:600;background:var(--accent);color:#fff;border-radius:10px;border:none}
 
+/* Dosya yükleme */
+.file-upload-area{display:block;background:var(--bg3);border:1.5px dashed var(--border2);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:all .15s}
+.file-upload-area:active{border-color:var(--accent)}
+.file-preview-empty{display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--text2);font-size:13px}
+.file-preview-empty svg{color:var(--text3)}
+.file-preview-img{width:100%;max-height:140px;object-fit:cover;border-radius:7px;display:block}
+.file-preview-pdf{display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg2);border-radius:8px}
+.file-preview-pdf-icon{font-size:28px}
+.file-preview-pdf-name{font-size:12px;color:var(--text);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.file-preview-change{font-size:11px;color:var(--accent);margin-top:6px;display:block;cursor:pointer}
+.kayit-dosya{display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 10px;background:var(--bg3);border-radius:8px;cursor:pointer;text-decoration:none}
+.kayit-dosya-ic{font-size:18px;flex-shrink:0}
+.kayit-dosya-ad{font-size:12px;color:var(--accent);font-family:var(--mono);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kayit-dosya-img{width:100%;max-height:160px;object-fit:cover;border-radius:8px;margin-top:8px;display:block;cursor:pointer}
+
 /* Belge kartı */
 .belge-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
 .belge-row{display:flex;align-items:center;gap:12px}
@@ -500,6 +515,17 @@ select option{background:var(--bg3)}
             <span>Tamamlandı olarak işaretle</span>
           </label>
         </div>
+        <div class="fg">
+          <label class="fl">Fotoğraf / Belge</label>
+          <label class="file-upload-area" id="e-file-area">
+            <input type="file" id="e-file" accept="image/*,.pdf" onchange="previewFile('e-file','e-file-preview','e-file-area')" style="display:none">
+            <div id="e-file-preview" class="file-preview-empty">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Fotoğraf veya PDF seç</span>
+              <span style="font-size:10px;color:var(--text3)">Fatura, fiş, hasar fotoğrafı...</span>
+            </div>
+          </label>
+        </div>
         <button class="btn-acc btn-full" id="e-save-btn" onclick="saveKayit()">Kaydet</button>
       </div>
     </div>
@@ -596,6 +622,16 @@ select option{background:var(--bg3)}
       </div>
     </div>
     <div class="fg"><label class="fl">Notlar</label><textarea class="fi" id="mb-notlar" rows="2" placeholder="Acente, poliçe no..."></textarea></div>
+    <div class="fg">
+      <label class="fl">Belge / Poliçe Dosyası</label>
+      <label class="file-upload-area" id="mb-file-area">
+        <input type="file" id="mb-file" accept="image/*,.pdf" onchange="previewFile('mb-file','mb-file-preview','mb-file-area')" style="display:none">
+        <div id="mb-file-preview" class="file-preview-empty">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span>Poliçe, ruhsat vb. dosya seç</span>
+        </div>
+      </label>
+    </div>
     <div style="display:flex;gap:8px;margin-top:6px">
       <button class="btn btn-full" onclick="closeModal('modal-belge')" style="flex:1">İptal</button>
       <button class="btn-acc btn-full" id="mb-save-btn" onclick="saveBelge()" style="flex:2">Kaydet</button>
@@ -634,6 +670,16 @@ select option{background:var(--bg3)}
       <label class="fcheck">
         <input type="checkbox" id="ed-done">
         <span>Tamamlandı</span>
+      </label>
+    </div>
+    <div class="fg">
+      <label class="fl">Fotoğraf / Belge</label>
+      <label class="file-upload-area" id="ed-file-area">
+        <input type="file" id="ed-file" accept="image/*,.pdf" onchange="previewFile('ed-file','ed-file-preview','ed-file-area')" style="display:none">
+        <div id="ed-file-preview" class="file-preview-empty">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span>Dosya seç veya değiştir</span>
+        </div>
       </label>
     </div>
     <div style="display:flex;gap:8px;margin-top:6px">
@@ -912,6 +958,7 @@ function renderAna(){
       </div>
       <div class="c-footer">
         <button class="btn-edit" onclick="openEditModal('${k.id}')">✎ Düzenle</button>
+        ${k.dosya_url?`<button class="btn-edit" onclick="openFile('${k.dosya_url}')" style="background:rgba(60,100,180,.08);border-color:rgba(60,100,180,.2);color:#3a64b4">📎 Dosya</button>`:''}
       </div>
     </div>`;
   }).join('');
@@ -978,6 +1025,10 @@ function openEditModal(id){
   $('ed-servis').value=k.servis||'';
   $('ed-notlar').value=k.notlar||'';
   $('ed-done').checked=!!k.tamamlandi;
+  $('ed-file').value='';
+  $('ed-file-preview').innerHTML=k.dosya_url
+    ?`<div class="file-preview-pdf"><span class="file-preview-pdf-icon">📎</span><span class="file-preview-pdf-name">Mevcut dosya var</span></div><span class="file-preview-change">Değiştirmek için tıkla</span>`
+    :`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Dosya seç veya değiştir</span>`;
   renderEditCatGrid();
   $('modal-edit').classList.add('open');
 }
@@ -1010,10 +1061,57 @@ async function updateKayit(){
   const {error}=await sb.from('kayitlar').update(updates).eq('id',id);
   btn.disabled=false;btn.textContent='Güncelle';
   if(error){setSyncDot('err');toast('Hata: '+error.message);return;}
+  // Dosya yükle
+  const file=$('ed-file').files[0];
+  if(file){
+    const path=await uploadFile(file,id,'kayitlar');
+    if(path)await sb.from('kayitlar').update({dosya_url:path}).eq('id',id);
+  }
   await loadAll();setSyncDot('ok');closeModal('modal-edit');renderAna();toast('Kayıt güncellendi ✓');
 }
 
-// ─── ONBOARDING ──────────────────────────────────
+// ─── DOSYA YÜKLEMESİ ─────────────────────────────
+function previewFile(inputId, previewId, areaId){
+  const file=$(''+inputId).files[0];
+  const preview=$(previewId);
+  if(!file)return;
+  if(file.type.startsWith('image/')){
+    const reader=new FileReader();
+    reader.onload=e=>{
+      preview.innerHTML=`<img src="${e.target.result}" class="file-preview-img"><span class="file-preview-change">Değiştir</span>`;
+    };
+    reader.readAsDataURL(file);
+  }else{
+    preview.innerHTML=`<div class="file-preview-pdf"><span class="file-preview-pdf-icon">📄</span><span class="file-preview-pdf-name">${file.name}</span></div><span class="file-preview-change">Değiştir</span>`;
+  }
+}
+
+async function uploadFile(file, kayitId, tablo){
+  if(!file)return null;
+  const ext=file.name.split('.').pop();
+  const path=`${USER.id}/${tablo}/${kayitId}.${ext}`;
+  const {error}=await sb.storage.from('belgeler').upload(path,file,{upsert:true});
+  if(error){toast('Dosya yüklenemedi: '+error.message);return null;}
+  return path;
+}
+
+async function getFileUrl(path){
+  if(!path)return null;
+  const {data}=await sb.storage.from('belgeler').createSignedUrl(path,3600);
+  return data?.signedUrl||null;
+}
+
+async function delFile(path){
+  if(!path)return;
+  await sb.storage.from('belgeler').remove([path]);
+}
+
+async function openFile(path){
+  if(!path)return;
+  toast('Dosya açılıyor...');
+  const url=await getFileUrl(path);
+  if(url)window.open(url,'_blank');
+}
 let obStep=0;
 
 function showOnboarding(){
@@ -1104,6 +1202,8 @@ function initEkle(){
   $('e-tarih').value=new Date().toISOString().split('T')[0];
   ['e-baslik','e-km','e-skm','e-starih','e-maliyet','e-servis','e-notlar'].forEach(id=>$(id).value='');
   $('e-done').checked=false;
+  $('e-file').value='';
+  $('e-file-preview').innerHTML=`<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Fotoğraf veya PDF seç</span><span style="font-size:10px;color:var(--text3)">Fatura, fiş, hasar fotoğrafı...</span>`;
   const sel=$('e-arac-sel');
   sel.innerHTML=araclar.map(a=>`<option value="${a.id}">${a.ikon} ${a.marka} ${a.model}</option>`).join('');
   if(selAracId)sel.value=selAracId;
@@ -1147,9 +1247,15 @@ async function saveKayit(){
     servis:$('e-servis').value.trim(),
     notlar:$('e-notlar').value.trim(),
     tamamlandi:$('e-done').checked};
-  const {error}=await sb.from('kayitlar').insert(row);
+  const {data,error}=await sb.from('kayitlar').insert(row).select();
+  if(error){btn.disabled=false;btn.textContent='Kaydet';setSyncDot('err');toast('Hata: '+error.message);return;}
+  // Dosya yükle
+  const file=$('e-file').files[0];
+  if(file&&data&&data[0]){
+    const path=await uploadFile(file,data[0].id,'kayitlar');
+    if(path)await sb.from('kayitlar').update({dosya_url:path}).eq('id',data[0].id);
+  }
   btn.disabled=false;btn.textContent='Kaydet';
-  if(error){setSyncDot('err');toast('Hata: '+error.message);return;}
   if(km&&aracId){
     const ar=araclar.find(a=>a.id===aracId);
     if(ar&&(!ar.km||km>ar.km)){await sb.from('araclar').update({km}).eq('id',aracId);}
@@ -1577,11 +1683,18 @@ async function saveBelge(){
     notlar:$('mb-notlar').value.trim(),
     user_id:USER.id,
   };
+  const newId=id||uid();
   const {error}=id
     ?await sb.from('belgeler').update(row).eq('id',id)
-    :await sb.from('belgeler').insert({...row,id:uid()});
+    :await sb.from('belgeler').insert({...row,id:newId});
   btn.disabled=false;btn.textContent='Kaydet';
   if(error){setSyncDot('err');toast('Hata: '+error.message);return;}
+  // Dosya yükle
+  const file=$('mb-file').files[0];
+  if(file){
+    const path=await uploadFile(file,newId,'belgeler');
+    if(path)await sb.from('belgeler').update({dosya_url:path}).eq('id',newId);
+  }
   await loadAll();setSyncDot('ok');closeModal('modal-belge');renderBelgeler();toast('Belge kaydedildi ✓');
 }
 
@@ -1637,6 +1750,7 @@ function renderBelgeler(){
           <button class="btn btn-icon btn-del" onclick="delBelge('${b.id}')">✕</button>
         </div>
       </div>
+      ${b.dosya_url?`<button onclick="openFile('${b.dosya_url}')" style="display:flex;align-items:center;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);width:100%;background:none;border-left:none;border-right:none;border-bottom:none;color:#3a64b4;font-size:12px;font-family:var(--mono);cursor:pointer;text-align:left">📎 Belge dosyasını görüntüle</button>`:''}
     </div>`;
   }).join('');
 }
