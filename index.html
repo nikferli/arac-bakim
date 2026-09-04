@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="AraçBakım">
 <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAGNElEQVR4nO3dP47dVBjGYU+Ukj2MRBEkIiQ2kIKCFokVkIpyFjMlVVgBLRIFRTYQCQWJNGhWQENBgQQFulxfz9jXx/b5/r2/p4wy9pnvfO85tnNzfTM4++2bT//xHgP8fPL9rzee5zc/OQ2PJdaBMDkZTY8tLMLQ9QQ0Po7QMwhdDkzjo4ceQTj0gDQ+LBwZhEMOROPDwxFBeLb3ADQ/vBzRe7sCQPPD294e3LSF0PiIaMslUfMOQPMjqi292RQAmh/Rtfbo6gDQ/MiipVdXBYDmRzZre3b3Y1Ags6sBYPVHVmt6dzEAND+yu9bDswGg+VHFUi9zDwBpTwaA1R/VzPU0OwCkPQoAqz+qeqq32QEg7SIArP6obtrj7ACQ9n8AWP2hYtzr7ACQRgAg7dkwcPkDPaeeZweANAIAaQQA0m64/ocydgBIIwCQRgAgjQBAGgGANAIAaQQA0ggApBEASCMAkEYAII0AQBoBgDQCAGkEANIIAKQRAEgjAJBGACCNAEAaAYA0AgBpBADSCACkEQBIIwCQRgAgjQBA2nPvAfT04s177yGU8OH1S+8hdFPy26Fp/D4qBqFUAGh8G5WCUOYegOa3U6nWJQJQaUKyqFLz9AGoMhEZVah96adAYx9ev/za8nwv3rz/4cjjZR9/VKlvgtesQNaNM7W3kTKMP/NNcdkdwLtxTk7jaA1C9vFnkfYeYGn1j9I8Yy1jyjb+zPcCaQMAHKFcACKunidrxpZ9/NmUCwDQolQAMqxQS2PMPv6MSgUAaEUAII0AQBoBgDQCAGkEANIIAKQRAEgjAJBGACCNAEAaAYA0AgBpBADSCACklQpAhv+4vTTG7OPPKG0AMn8VRzWZ5yJtAOZEXqHWjC37+LNJHYDMK08V2ecgdQDmRFypWsaUffyZpP5qxJPIX5JV+asRs6/+wxAoAL2/XSz7l8tmH/9UlPC4BiDzV+rhOJ5hcLsHoPlx4tkLLgGg+THl1RPmAaD5McejN0wDQPPjGuseMQsAzY+1LHvFJAA0P1pZ9UzJfwkG1rJ/R9gvr44/5mdvjz8mrnvVYS7f2s5l9x3gYivr0fw9j4t5PZp/clyLyyC7S6DeTUoI7PRqfqvjj3APAGkEANIIAKQRAEgjAJBGACCNAEAaAYA0uwD0/rgCH4ew0/vjCoYfh7DdAXo1Kc1vr1eTGn8WyP7DcDRrHcbN2gP3AJBGACCNAEAaAYA0AgBpBADS7B+DHuj29vbq33l4eDAYSV3Va5wuAGsmZO7vZ54oS0o1ThOA1klZOka2SbKiWOMU9wBHTEzP41WgWuPQO0DPImZbqXpRr3HYHcBqBcmyUvVAjQ0CsOXtH9YFizxBvWSoscWbY8LtAF7NqBQCanwWLgCAJZMArN3KvFcI7/Nb8P4d157f6sV5pm+JXPqy0z0Tc3d39+jP7u/vNx8v8lOLPbLU2PKtkeavSZ0LwZbJeWpSprZMEgE4s66x9StTXd4TPA1B68SsmZSp1kmqFoIMNfZ4X7DLTfCeX3TLxOz5OUUeNfZ6WbbbUyDPt4MjFs9ecLkEGvvy5z9X/90jVvGWbbrKZVDL5Y91jX/64qPd59sj9GeBWoyLftTlDrvUpR419pbmH8KWCj5dcZZWoCoT14NijdMEYM7cROx5Ro1LlWucPgDAHs9//+Mv7zGERW36865x+h1g7noz03VodJVrnCYALTddLTdzOFOscZnHoBVWo+gq1th9B/ju8/UZ3LuytPx8y7iio8bz3AMAeEoXgK0rVKbrUm9KNb758auPXT8LdPLtu7+bf6bXZ9UjbM09UOPHYoxio1Phj/7fSjirXuMwO8AwbFuhjhZlZeqFGl8KdQ/gXRjv81vw/h29zz8VKgCAtXAB8Fohoq1MPVHjs3ABGAb7QkWcmN6o8X9CBmAY7AoWdWIsUONgT4Hm9HhyEXlSPKjWOOwOMHZ0ITNMjDXVGqfYAcb2rFRZJsWbUo3TBWBszURlm5Boqtc4dQCAvVLcAwC9EABIIwCQRgAgjQBAGgGANAIAaQQA0ggApBEASCMAkEYAII0AQBoBgDQCAGkEANIIAKQRAEgjAJBGACCNAEAaAYA0AgBpBADSCACkEQBIIwCQ9i9wOSqSZ3IDgwAAAABJRU5ErkJggg==">
@@ -1110,8 +1109,20 @@ async function delFile(path){
 async function openFile(path){
   if(!path)return;
   toast('Dosya açılıyor...');
+  // iOS Safari popup engelini aşmak için önce <a> oluştur
+  const a=document.createElement('a');
+  a.href='#';
+  a.target='_blank';
+  a.rel='noopener';
+  document.body.appendChild(a);
   const url=await getFileUrl(path);
-  if(url)window.open(url,'_blank');
+  if(url){
+    a.href=url;
+    a.click();
+  }else{
+    toast('Dosya açılamadı!');
+  }
+  document.body.removeChild(a);
 }
 let obStep=0;
 
