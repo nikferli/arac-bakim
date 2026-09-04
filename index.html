@@ -1108,21 +1108,12 @@ async function delFile(path){
 
 async function openFile(path){
   if(!path)return;
-  toast('Dosya açılıyor...');
-  // iOS Safari popup engelini aşmak için önce <a> oluştur
-  const a=document.createElement('a');
-  a.href='#';
-  a.target='_blank';
-  a.rel='noopener';
-  document.body.appendChild(a);
+  toast('Dosya yükleniyor...');
   const url=await getFileUrl(path);
-  if(url){
-    a.href=url;
-    a.click();
-  }else{
-    toast('Dosya açılamadı!');
-  }
-  document.body.removeChild(a);
+  if(!url){toast('Dosya açılamadı!');return;}
+  // iOS Safari'de window.open ve <a target=_blank> engelleniyor
+  // location.href ile aynı sekmede açıyoruz
+  location.href=url;
 }
 let obStep=0;
 
