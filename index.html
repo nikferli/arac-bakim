@@ -443,6 +443,13 @@ select option{background:var(--bg3)}
           PDF Rapor İndir
         </button>
         <button class="btn btn-full" onclick="signOut()" style="margin-top:6px;color:var(--danger)">Çıkış Yap</button>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+          <div class="sec">Bildirim Ayarları</div>
+          <button class="io-btn btn-full" id="push-btn" onclick="pushIzniIste()" style="justify-content:center">
+            🔔 Push Bildirimlerini Aktif Et
+          </button>
+          <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:6px;font-family:var(--mono)">Uygulama kapalıyken bakım ve belge hatırlatması alın</div>
+        </div>
       </div>
     </div>
   </div>
@@ -1115,6 +1122,78 @@ async function openFile(path){
   // location.href ile aynı sekmede açıyoruz
   location.href=url;
 }
+
+// ─── PUSH BİLDİRİM ───────────────────────────────
+const VAPID_PUBLIC='BOskAAO1fKZG_q8wZtqxqmtZl-qeE7lgUtIl4MFnucyYdJGZ-lx8XQeGGBLsDBUW06cj93llCsRWqSEtZ8PF16w';
+const EDGE_URL='https://nvnvmnumcxckrxaxnqgg.supabase.co/functions/v1/push-bildirim';
+
+function urlBase64ToUint8Array(b){
+  const pad='='.repeat((4-b.length%4)%4);
+  const base64=(b+pad).replace(/-/g,'+').replace(/_/g,'/');
+  const raw=window.atob(base64);
+  const arr=new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i);
+  return arr;
+}
+
+async function pushIzniIste(){
+  if(!('serviceWorker' in navigator)||!('PushManager' in window)){
+    toast('Bu cihaz push bildirimi desteklemiyor');return;
+  }
+  const izin=await Notification.requestPermission();
+  if(izin!=='granted'){toast('Bildirim izni verilmedi');return;}
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    const sub=await reg.pushManager.subscribe({
+      userVisibleOnly:true,
+      applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC)
+    });
+    const {error}=await sb.from('push_abonelikler').upsert({
+      user_id:USER.id,
+      subscription:sub.toJSON(),
+    },{onConflict:'user_id'});
+    if(error)throw error;
+    toast('Push bildirimleri aktif ✓');
+    const btn=$('push-btn');
+    if(btn){btn.textContent='🔔 Bildirimler Aktif';btn.style.color='var(--ok)';}
+  }catch(e){toast('Hata: '+e.message);}
+}
+
+async function pushBildirimGonder(title,body){
+  try{
+    const {data}=await sb.from('push_abonelikler').select('subscription').eq('user_id',USER.id).single();
+    if(!data)return;
+    const {data:{session}}=await sb.auth.getSession();
+    await fetch(EDGE_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+      body:JSON.stringify({subscription:data.subscription,title,body})
+    });
+  }catch(e){console.log('Push gönderilemedi:',e.message);}
+}
+
+async function yaklaşanBildirimKontrol(){
+  if(!USER)return;
+  const uyarilar=[];
+  kayitlar.forEach(k=>{
+    if(!k.tamamlandi&&k.tarih){
+      const g=daysUntil(k.tarih);
+      if(g===7)uyarilar.push({title:'⏰ Bakım Hatırlatması',body:`${catInfo(k.kat).ic} ${k.baslik} — 7 gün kaldı`});
+      if(g===1)uyarilar.push({title:'⚠ Yarın Bakım!',body:`${catInfo(k.kat).ic} ${k.baslik} — yarın!`});
+    }
+    if(k.tamamlandi&&k.starih){
+      const g=daysUntil(k.starih);
+      if(g===7)uyarilar.push({title:'⏰ Sonraki Bakım Yaklaşıyor',body:`${catInfo(k.kat).ic} ${k.baslik} — 7 gün kaldı`});
+    }
+  });
+  belgeler.forEach(b=>{
+    const g=daysUntil(b.bitis_tarihi);
+    if(g===b.hatirlatma_gun)uyarilar.push({title:'📋 Belge Yenileme',body:`${belgeInfo(b.tip).ic} ${b.baslik} — ${g} gün kaldı`});
+    if(g===7)uyarilar.push({title:'⚠ Belge Süresi Yaklaşıyor',body:`${belgeInfo(b.tip).ic} ${b.baslik} — 7 gün kaldı`});
+  });
+  for(const u of uyarilar)await pushBildirimGonder(u.title,u.body);
+}
+
 let obStep=0;
 
 function showOnboarding(){
@@ -1785,6 +1864,8 @@ async function init(){
       USER=session.user;
       await loadAll();
       hideLoading();hideLogin();showApp();showView('ana');
+      // Bildirim kontrolü — giriş yapınca çalıştır
+      setTimeout(()=>yaklaşanBildirimKontrol(),3000);
     }
     if(!session&&USER){USER=null;hideApp();showLogin();}
   });
