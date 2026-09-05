@@ -1,4 +1,4 @@
-const CACHE = 'arac-bakim-v2';
+const CACHE = 'arac-bakim-v3';
 const ASSETS = ['./index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
@@ -19,9 +19,31 @@ self.addEventListener('fetch', e => {
   );
 });
 
+// Push bildirimi al ve göster
 self.addEventListener('push', e => {
-  const data = e.data ? e.data.json() : { title: 'Araç Bakım', body: 'Bakım zamanı yaklaşıyor!' };
-  e.waitUntil(self.registration.showNotification(data.title, {
-    body: data.body, icon: './icon.png', badge: './icon.png'
-  }));
+  let data = { title: 'Araç Bakım', body: 'Yeni hatırlatma var!' };
+  try { data = JSON.parse(e.data.text()); } catch(err) {}
+  e.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: './icon.png',
+      badge: './icon.png',
+      vibrate: [200, 100, 200],
+      data: { url: self.location.origin + self.location.pathname.replace('sw.js','') }
+    })
+  );
+});
+
+// Bildirime tıklanınca uygulamayı aç
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(
+    clients.matchAll({type:'window'}).then(list => {
+      const url = e.notification.data?.url || '/';
+      for(const client of list){
+        if(client.url===url && 'focus' in client) return client.focus();
+      }
+      if(clients.openWindow) return clients.openWindow(url);
+    })
+  );
 });
