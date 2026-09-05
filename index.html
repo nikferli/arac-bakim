@@ -1175,22 +1175,52 @@ async function pushBildirimGonder(title,body){
 async function yaklaşanBildirimKontrol(){
   if(!USER)return;
   const uyarilar=[];
+  const ESIKLER=[30,14,7,3,1]; // Bu günlerde bildirim gönder
+
   kayitlar.forEach(k=>{
     if(!k.tamamlandi&&k.tarih){
       const g=daysUntil(k.tarih);
-      if(g===7)uyarilar.push({title:'⏰ Bakım Hatırlatması',body:`${catInfo(k.kat).ic} ${k.baslik} — 7 gün kaldı`});
-      if(g===1)uyarilar.push({title:'⚠ Yarın Bakım!',body:`${catInfo(k.kat).ic} ${k.baslik} — yarın!`});
+      if(ESIKLER.includes(g))uyarilar.push({
+        title:'⏰ Bakım Hatırlatması',
+        body:`${catInfo(k.kat).ic} ${k.baslik} — ${g===1?'yarın!':g+' gün kaldı'}`
+      });
+      if(g<0&&g>=-1)uyarilar.push({
+        title:'⚠ Bakım Gecikti!',
+        body:`${catInfo(k.kat).ic} ${k.baslik} — bugün yapılması gerekiyordu`
+      });
     }
     if(k.tamamlandi&&k.starih){
       const g=daysUntil(k.starih);
-      if(g===7)uyarilar.push({title:'⏰ Sonraki Bakım Yaklaşıyor',body:`${catInfo(k.kat).ic} ${k.baslik} — 7 gün kaldı`});
+      if(ESIKLER.includes(g))uyarilar.push({
+        title:'⏰ Sonraki Bakım Yaklaşıyor',
+        body:`${catInfo(k.kat).ic} ${k.baslik} — ${g===1?'yarın!':g+' gün kaldı'}`
+      });
+    }
+    if(k.tamamlandi&&k.skm){
+      const ar=araclar.find(a=>a.id===k.arac_id);
+      if(ar&&ar.km){
+        const kalan=k.skm-ar.km;
+        if(kalan>0&&kalan<=500)uyarilar.push({
+          title:'⚠ KM Bakımı Yaklaşıyor',
+          body:`${catInfo(k.kat).ic} ${k.baslik} — ${kalan.toLocaleString('tr-TR')} km kaldı`
+        });
+      }
     }
   });
+
   belgeler.forEach(b=>{
     const g=daysUntil(b.bitis_tarihi);
-    if(g===b.hatirlatma_gun)uyarilar.push({title:'📋 Belge Yenileme',body:`${belgeInfo(b.tip).ic} ${b.baslik} — ${g} gün kaldı`});
-    if(g===7)uyarilar.push({title:'⚠ Belge Süresi Yaklaşıyor',body:`${belgeInfo(b.tip).ic} ${b.baslik} — 7 gün kaldı`});
+    if(ESIKLER.includes(g)||g===b.hatirlatma_gun)uyarilar.push({
+      title:'📋 Belge Yenileme',
+      body:`${belgeInfo(b.tip).ic} ${b.baslik} — ${g===1?'yarın!':g+' gün kaldı'}`
+    });
+    if(g<0&&g>=-1)uyarilar.push({
+      title:'⚠ Belge Süresi Doldu!',
+      body:`${belgeInfo(b.tip).ic} ${b.baslik} — yenilenmesi gerekiyor`
+    });
   });
+
+  console.log('Bildirim kontrolü:', uyarilar.length, 'uyarı bulundu');
   for(const u of uyarilar)await pushBildirimGonder(u.title,u.body);
 }
 
