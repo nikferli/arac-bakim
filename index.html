@@ -225,6 +225,11 @@ select option{background:var(--bg3)}
 .kayit-dosya-ad{font-size:12px;color:var(--accent);font-family:var(--mono);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .kayit-dosya-img{width:100%;max-height:160px;object-fit:cover;border-radius:8px;margin-top:8px;display:block;cursor:pointer}
 
+/* Offline banner */
+.offline-banner{display:none;align-items:center;justify-content:center;gap:8px;background:#1a1200;border-bottom:1px solid rgba(255,170,0,.3);padding:7px 14px;flex-shrink:0;font-size:12px;color:var(--warn);font-family:var(--mono)}
+.offline-banner.show{display:flex}
+@media(prefers-color-scheme:light){.offline-banner{background:#fff8e6;border-color:rgba(180,120,0,.2)}}
+
 /* Belge kartı */
 .belge-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
 .belge-row{display:flex;align-items:center;gap:12px}
@@ -334,6 +339,12 @@ select option{background:var(--bg3)}
 
 <!-- ANA UYGULAMA -->
 <div id="app" style="display:none">
+
+  <!-- OFFLİNE BANNER -->
+  <div class="offline-banner" id="offline-banner">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+    İnternet bağlantısı yok — son veriler gösteriliyor
+  </div>
 
   <!-- ANA VIEW -->
   <div class="view active" id="view-ana">
@@ -796,9 +807,56 @@ async function signOut(){
   hideApp();showLogin();
 }
 
+// ─── OFFLİNE YÖNETİMİ ───────────────────────────
+const CACHE_KEY='arac_bakim_cache';
+
+function cacheKaydet(){
+  try{
+    localStorage.setItem(CACHE_KEY,JSON.stringify({araclar,kayitlar,yakitlar,belgeler,ts:Date.now()}));
+  }catch(e){}
+}
+
+function cacheYukle(){
+  try{
+    const d=localStorage.getItem(CACHE_KEY);
+    if(!d)return false;
+    const c=JSON.parse(d);
+    araclar=c.araclar||[];
+    kayitlar=c.kayitlar||[];
+    yakitlar=c.yakitlar||[];
+    belgeler=c.belgeler||[];
+    if(!selAracId&&araclar.length)selAracId=araclar[0].id;
+    return true;
+  }catch(e){return false;}
+}
+
+function offlineBannerGoster(goster){
+  const b=$('offline-banner');
+  if(b)b.classList.toggle('show',goster);
+}
+
+// Bağlantı değişimlerini izle
+window.addEventListener('online',async()=>{
+  offlineBannerGoster(false);
+  if(USER){await loadAll();renderAna();}
+  toast('Bağlantı yeniden kuruldu ✓');
+});
+
+window.addEventListener('offline',()=>{
+  offlineBannerGoster(true);
+  setSyncDot('err');
+});
+
 // ─── VERİ YÜKLEMESİ ──────────────────────────────
 async function loadAll(){
   setSyncDot('syncing');
+  if(!navigator.onLine){
+    // Offline — önbellekten yükle
+    offlineBannerGoster(true);
+    cacheYukle();
+    setSyncDot('err');
+    return;
+  }
   try{
     const uid=USER.id;
     const [a,k,y,b]=await Promise.all([
@@ -807,13 +865,25 @@ async function loadAll(){
       sb.from('yakitlar').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
       sb.from('belgeler').select('*').eq('user_id',uid).order('bitis_tarihi'),
     ]);
+    if(a.error||k.error||y.error||b.error)throw new Error('Veri hatası');
     araclar=a.data||[];
     kayitlar=k.data||[];
     yakitlar=y.data||[];
     belgeler=b.data||[];
     if(!selAracId&&araclar.length)selAracId=araclar[0].id;
+    cacheKaydet(); // Başarılı yüklemede önbelleğe yaz
+    offlineBannerGoster(false);
     setSyncDot('ok');
-  }catch(e){setSyncDot('err');toast('Bağlantı hatası!');}
+  }catch(e){
+    setSyncDot('err');
+    // Hata olunca önbellekten yükle
+    if(cacheYukle()){
+      offlineBannerGoster(true);
+      toast('Bağlantı hatası — son veriler gösteriliyor');
+    }else{
+      toast('Bağlantı hatası!');
+    }
+  }
 }
 
 // ─── VIEW YÖNETİMİ ───────────────────────────────
@@ -965,7 +1035,13 @@ function renderAna(){
       </div>
       <div class="c-footer">
         <button class="btn-edit" onclick="openEditModal('${k.id}')">✎ Düzenle</button>
-        ${k.dosya_url?`<button class="btn-edit" onclick="openFile('${k.dosya_url}')" style="background:rgba(60,100,180,.08);border-color:rgba(60,100,180,.2);color:#3a64b4">📎 Dosya</button>`:''}
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          ${(()=>{
+            const urls=[...(k.dosya_urls||[])];
+            if(k.dosya_url&&!urls.includes(k.dosya_url))urls.unshift(k.dosya_url);
+            return urls.map((p,i)=>`<button class="btn-edit" onclick="openFile('${p}')" style="background:rgba(60,100,180,.08);border-color:rgba(60,100,180,.2);color:#3a64b4">📎 Dosya ${urls.length>1?i+1:''}</button>`).join('');
+          })()}
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -1068,18 +1144,25 @@ async function updateKayit(){
   const {error}=await sb.from('kayitlar').update(updates).eq('id',id);
   btn.disabled=false;btn.textContent='Güncelle';
   if(error){setSyncDot('err');toast('Hata: '+error.message);return;}
-  // Dosya yükle
+  // Dosya yükle — mevcut listeye ekle
   const file=$('ed-file').files[0];
   if(file){
     const path=await uploadFile(file,id,'kayitlar');
-    if(path)await sb.from('kayitlar').update({dosya_url:path}).eq('id',id);
+    if(path){
+      const k=kayitlar.find(x=>x.id===id);
+      const mevcutUrls=k?.dosya_urls||[];
+      await sb.from('kayitlar').update({
+        dosya_url:path,
+        dosya_urls:[...mevcutUrls,path]
+      }).eq('id',id);
+    }
   }
   await loadAll();setSyncDot('ok');closeModal('modal-edit');renderAna();toast('Kayıt güncellendi ✓');
 }
 
 // ─── DOSYA YÜKLEMESİ ─────────────────────────────
 function previewFile(inputId, previewId, areaId){
-  const file=$(''+inputId).files[0];
+  const file=$(inputId).files[0];
   const preview=$(previewId);
   if(!file)return;
   if(file.type.startsWith('image/')){
@@ -1096,8 +1179,9 @@ function previewFile(inputId, previewId, areaId){
 async function uploadFile(file, kayitId, tablo){
   if(!file)return null;
   const ext=file.name.split('.').pop();
-  const path=`${USER.id}/${tablo}/${kayitId}.${ext}`;
-  const {error}=await sb.storage.from('belgeler').upload(path,file,{upsert:true});
+  // Timestamp ekleyerek çakışmayı önle
+  const path=`${USER.id}/${tablo}/${kayitId}_${Date.now()}.${ext}`;
+  const {error}=await sb.storage.from('belgeler').upload(path,file,{upsert:false});
   if(error){toast('Dosya yüklenemedi: '+error.message);return null;}
   return path;
 }
@@ -1113,13 +1197,16 @@ async function delFile(path){
   await sb.storage.from('belgeler').remove([path]);
 }
 
+async function delFiles(paths){
+  if(!paths||!paths.length)return;
+  await sb.storage.from('belgeler').remove(paths);
+}
+
 async function openFile(path){
   if(!path)return;
   toast('Dosya yükleniyor...');
   const url=await getFileUrl(path);
   if(!url){toast('Dosya açılamadı!');return;}
-  // iOS Safari'de window.open ve <a target=_blank> engelleniyor
-  // location.href ile aynı sekmede açıyoruz
   location.href=url;
 }
 
@@ -1361,11 +1448,17 @@ async function saveKayit(){
     tamamlandi:$('e-done').checked};
   const {data,error}=await sb.from('kayitlar').insert(row).select();
   if(error){btn.disabled=false;btn.textContent='Kaydet';setSyncDot('err');toast('Hata: '+error.message);return;}
-  // Dosya yükle
+  // Dosya yükle — dosya_urls array'e ekle
   const file=$('e-file').files[0];
   if(file&&data&&data[0]){
     const path=await uploadFile(file,data[0].id,'kayitlar');
-    if(path)await sb.from('kayitlar').update({dosya_url:path}).eq('id',data[0].id);
+    if(path){
+      const mevcutUrls=data[0].dosya_urls||[];
+      await sb.from('kayitlar').update({
+        dosya_url:path, // geriye dönük uyumluluk
+        dosya_urls:[...mevcutUrls,path]
+      }).eq('id',data[0].id);
+    }
   }
   btn.disabled=false;btn.textContent='Kaydet';
   if(km&&aracId){
@@ -1385,6 +1478,15 @@ async function toggleDone(id,current){
 async function delKayit(id){
   if(!confirm('Bu kaydı silmek istiyorsunuz?'))return;
   setSyncDot('syncing');
+  // Storage dosyalarını sil
+  const k=kayitlar.find(x=>x.id===id);
+  if(k){
+    const paths=[
+      ...(k.dosya_urls||[]),
+      ...(k.dosya_url&&!(k.dosya_urls||[]).includes(k.dosya_url)?[k.dosya_url]:[])
+    ].filter(Boolean);
+    if(paths.length)await delFiles(paths);
+  }
   await sb.from('kayitlar').delete().eq('id',id);
   await loadAll();setSyncDot('ok');renderAna();
 }
@@ -1801,17 +1903,33 @@ async function saveBelge(){
     :await sb.from('belgeler').insert({...row,id:newId});
   btn.disabled=false;btn.textContent='Kaydet';
   if(error){setSyncDot('err');toast('Hata: '+error.message);return;}
-  // Dosya yükle
+  // Dosya yükle — mevcut listeye ekle
   const file=$('mb-file').files[0];
   if(file){
     const path=await uploadFile(file,newId,'belgeler');
-    if(path)await sb.from('belgeler').update({dosya_url:path}).eq('id',newId);
+    if(path){
+      const b=belgeler.find(x=>x.id===newId);
+      const mevcutUrls=b?.dosya_urls||[];
+      await sb.from('belgeler').update({
+        dosya_url:path,
+        dosya_urls:[...mevcutUrls,path]
+      }).eq('id',newId);
+    }
   }
   await loadAll();setSyncDot('ok');closeModal('modal-belge');renderBelgeler();toast('Belge kaydedildi ✓');
 }
 
 async function delBelge(id){
   if(!confirm('Bu belgeyi silmek istiyorsunuz?'))return;
+  // Storage dosyalarını sil
+  const b=belgeler.find(x=>x.id===id);
+  if(b){
+    const paths=[
+      ...(b.dosya_urls||[]),
+      ...(b.dosya_url&&!(b.dosya_urls||[]).includes(b.dosya_url)?[b.dosya_url]:[])
+    ].filter(Boolean);
+    if(paths.length)await delFiles(paths);
+  }
   await sb.from('belgeler').delete().eq('id',id);
   await loadAll();renderBelgeler();toast('Belge silindi');
 }
@@ -1862,7 +1980,13 @@ function renderBelgeler(){
           <button class="btn btn-icon btn-del" onclick="delBelge('${b.id}')">✕</button>
         </div>
       </div>
-      ${b.dosya_url?`<button onclick="openFile('${b.dosya_url}')" style="display:flex;align-items:center;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);width:100%;background:none;border-left:none;border-right:none;border-bottom:none;color:#3a64b4;font-size:12px;font-family:var(--mono);cursor:pointer;text-align:left">📎 Belge dosyasını görüntüle</button>`:''}
+      ${(()=>{
+        const urls=[...(b.dosya_urls||[])];
+        if(b.dosya_url&&!urls.includes(b.dosya_url))urls.unshift(b.dosya_url);
+        return urls.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+          ${urls.map((p,i)=>`<button onclick="openFile('${p}')" style="display:flex;align-items:center;gap:5px;background:none;border:1px solid rgba(60,100,180,.2);border-radius:6px;padding:5px 10px;color:#3a64b4;font-size:12px;font-family:var(--mono);cursor:pointer">📎 Dosya ${urls.length>1?i+1:''}</button>`).join('')}
+        </div>`:'';
+      })()}
     </div>`;
   }).join('');
 }
@@ -1876,16 +2000,19 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catc
 
 // ─── BAŞLATMA ────────────────────────────────────
 async function init(){
-  // Onboarding — sadece ilk kez göster
-  if(!localStorage.getItem('ob_done')){
-    showOnboarding();
-  }
+  if(!localStorage.getItem('ob_done'))showOnboarding();
+  if(!navigator.onLine)offlineBannerGoster(true);
   showLoading();
   const {data:{session}}=await sb.auth.getSession();
   if(session){
     USER=session.user;
-    await loadAll();
-    hideLoading();hideLogin();showApp();showView('ana');
+    if(!navigator.onLine&&cacheYukle()){
+      hideLoading();hideLogin();showApp();showView('ana');
+    }else{
+      await loadAll();
+      hideLoading();hideLogin();showApp();showView('ana');
+      setTimeout(()=>yaklaşanBildirimKontrol(),3000);
+    }
   }else{
     hideLoading();showLogin();
   }
@@ -1894,7 +2021,6 @@ async function init(){
       USER=session.user;
       await loadAll();
       hideLoading();hideLogin();showApp();showView('ana');
-      // Bildirim kontrolü — giriş yapınca çalıştır
       setTimeout(()=>yaklaşanBildirimKontrol(),3000);
     }
     if(!session&&USER){USER=null;hideApp();showLogin();}
