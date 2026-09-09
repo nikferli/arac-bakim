@@ -1039,7 +1039,11 @@ function renderAna(){
           ${(()=>{
             const urls=[...(k.dosya_urls||[])];
             if(k.dosya_url&&!urls.includes(k.dosya_url))urls.unshift(k.dosya_url);
-            return urls.map((p,i)=>`<button class="btn-edit" onclick="openFile('${p}')" style="background:rgba(60,100,180,.08);border-color:rgba(60,100,180,.2);color:#3a64b4">📎 Dosya ${urls.length>1?i+1:''}</button>`).join('');
+            return urls.map((p,i)=>`
+              <div style="display:flex;align-items:center;gap:2px">
+                <button class="btn-edit" onclick="openFile('${p}')" style="background:rgba(60,100,180,.08);border-color:rgba(60,100,180,.2);color:#3a64b4">📎 ${urls.length>1?'Dosya '+(i+1):'Dosya'}</button>
+                <button onclick="delKayitDosya('${k.id}','${p}')" style="background:rgba(255,69,69,.08);border:1px solid rgba(255,69,69,.2);color:var(--danger);border-radius:6px;padding:5px 7px;font-size:11px;cursor:pointer" title="Dosyayı sil">✕</button>
+              </div>`).join('');
           })()}
         </div>
       </div>
@@ -1200,6 +1204,38 @@ async function delFile(path){
 async function delFiles(paths){
   if(!paths||!paths.length)return;
   await sb.storage.from('belgeler').remove(paths);
+}
+
+async function delKayitDosya(kayitId, path){
+  if(!confirm('Bu dosyayı silmek istiyorsunuz?'))return;
+  setSyncDot('syncing');
+  await delFile(path);
+  const k=kayitlar.find(x=>x.id===kayitId);
+  if(k){
+    const yeniUrls=(k.dosya_urls||[]).filter(u=>u!==path);
+    const yeniUrl=yeniUrls.length?yeniUrls[yeniUrls.length-1]:null;
+    await sb.from('kayitlar').update({
+      dosya_urls:yeniUrls,
+      dosya_url:yeniUrl
+    }).eq('id',kayitId);
+  }
+  await loadAll();setSyncDot('ok');renderAna();toast('Dosya silindi ✓');
+}
+
+async function delBelgeDosya(belgeId, path){
+  if(!confirm('Bu dosyayı silmek istiyorsunuz?'))return;
+  setSyncDot('syncing');
+  await delFile(path);
+  const b=belgeler.find(x=>x.id===belgeId);
+  if(b){
+    const yeniUrls=(b.dosya_urls||[]).filter(u=>u!==path);
+    const yeniUrl=yeniUrls.length?yeniUrls[yeniUrls.length-1]:null;
+    await sb.from('belgeler').update({
+      dosya_urls:yeniUrls,
+      dosya_url:yeniUrl
+    }).eq('id',belgeId);
+  }
+  await loadAll();setSyncDot('ok');renderBelgeler();toast('Dosya silindi ✓');
 }
 
 async function openFile(path){
@@ -1984,7 +2020,11 @@ function renderBelgeler(){
         const urls=[...(b.dosya_urls||[])];
         if(b.dosya_url&&!urls.includes(b.dosya_url))urls.unshift(b.dosya_url);
         return urls.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-          ${urls.map((p,i)=>`<button onclick="openFile('${p}')" style="display:flex;align-items:center;gap:5px;background:none;border:1px solid rgba(60,100,180,.2);border-radius:6px;padding:5px 10px;color:#3a64b4;font-size:12px;font-family:var(--mono);cursor:pointer">📎 Dosya ${urls.length>1?i+1:''}</button>`).join('')}
+          ${urls.map((p,i)=>`
+            <div style="display:flex;align-items:center;gap:2px">
+              <button onclick="openFile('${p}')" style="display:flex;align-items:center;gap:5px;background:none;border:1px solid rgba(60,100,180,.2);border-radius:6px;padding:5px 10px;color:#3a64b4;font-size:12px;font-family:var(--mono);cursor:pointer">📎 ${urls.length>1?'Dosya '+(i+1):'Dosya'}</button>
+              <button onclick="delBelgeDosya('${b.id}','${p}')" style="background:rgba(255,69,69,.08);border:1px solid rgba(255,69,69,.2);color:var(--danger);border-radius:6px;padding:5px 7px;font-size:11px;cursor:pointer" title="Dosyayı sil">✕</button>
+            </div>`).join('')}
         </div>`:'';
       })()}
     </div>`;
