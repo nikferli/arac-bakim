@@ -1298,7 +1298,7 @@ async function pushBildirimGonder(title,body){
 async function yaklaşanBildirimKontrol(){
   if(!USER)return;
   const uyarilar=[];
-  const ESIKLER=[30,14,7,3,1]; // Bu günlerde bildirim gönder
+  const ESIKLER=[7,3,1]; // Bu günlerde bildirim gönder
 
   kayitlar.forEach(k=>{
     if(!k.tamamlandi&&k.tarih){
