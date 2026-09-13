@@ -1353,8 +1353,18 @@ async function pushBildirimGonder(title,body){
 
 async function yaklaşanBildirimKontrol(){
   if(!USER)return;
+
+  // Bugün zaten gönderildi mi kontrol et
+  const bugunKey='push_son_kontrol_'+USER.id;
+  const sonKontrol=localStorage.getItem(bugunKey);
+  const bugun=new Date().toISOString().split('T')[0];
+  if(sonKontrol===bugun){
+    console.log('Push: bugün zaten kontrol edildi, atlanıyor');
+    return;
+  }
+
   const uyarilar=[];
-  const ESIKLER=[30,14,7,3,1]; // Bu günlerde bildirim gönder
+  const ESIKLER=[30,14,7,3,1];
 
   kayitlar.forEach(k=>{
     if(!k.tamamlandi&&k.tarih){
@@ -1401,6 +1411,9 @@ async function yaklaşanBildirimKontrol(){
 
   console.log('Bildirim kontrolü:', uyarilar.length, 'uyarı bulundu');
   for(const u of uyarilar)await pushBildirimGonder(u.title,u.body);
+
+  // Bugün kontrol edildi olarak işaretle
+  localStorage.setItem(bugunKey, bugun);
 }
 
 let obStep=0;
