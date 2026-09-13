@@ -894,7 +894,7 @@ function showView(v){
   const nb=$('nav-'+v);if(nb)nb.classList.add('active');
   if(v==='ana')renderAna();
   if(v==='yakit')renderYakit();
-  if(v==='rapor')renderRapor();
+  if(v==='rapor'){renderRapor();pushDurumKontrol();}
   if(v==='araclar')renderAraclar();
   if(v==='belgeler')renderBelgeler();
   if(v==='ekle')initEkle();
@@ -1259,6 +1259,64 @@ function urlBase64ToUint8Array(b){
   return arr;
 }
 
+function pushBtnGuncelle(aktif){
+  const btn=$('push-btn');
+  if(!btn)return;
+  if(aktif){
+    btn.textContent='🔔 Bildirimler Aktif';
+    btn.style.color='var(--ok)';
+  }else{
+    btn.textContent='🔕 Push Bildirimlerini Aktif Et';
+    btn.style.color='';
+  }
+}
+
+async function pushAbonelikKaydet(sub){
+  const {error}=await sb.from('push_abonelikler').upsert({
+    user_id:USER.id,
+    subscription:sub.toJSON(),
+  },{onConflict:'user_id'});
+  if(error)throw error;
+}
+
+async function pushDurumKontrol(){
+  // Service worker ve PushManager desteği yok
+  if(!('serviceWorker' in navigator)||!('PushManager' in window)){
+    pushBtnGuncelle(false);return;
+  }
+  // Bildirim izni verilmemiş
+  if(Notification.permission!=='granted'){
+    pushBtnGuncelle(false);return;
+  }
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    const mevcutSub=await reg.pushManager.getSubscription();
+    if(!mevcutSub){
+      // Abonelik yok — Supabase'den de sil
+      await sb.from('push_abonelikler').delete().eq('user_id',USER.id);
+      pushBtnGuncelle(false);return;
+    }
+    // Abonelik var — Supabase'de kayıtlı mı kontrol et
+    const {data}=await sb.from('push_abonelikler').select('id').eq('user_id',USER.id).single();
+    if(!data){
+      // Supabase'de yok ama cihazda var — yeniden kaydet
+      await pushAbonelikKaydet(mevcutSub);
+    }else{
+      // Her iki tarafta da var — endpoint değişmiş mi kontrol et
+      const {data:kayitliSub}=await sb.from('push_abonelikler').select('subscription').eq('user_id',USER.id).single();
+      if(kayitliSub?.subscription?.endpoint!==mevcutSub.endpoint){
+        // Token yenilenmiş — güncelle
+        await pushAbonelikKaydet(mevcutSub);
+        console.log('Push token güncellendi');
+      }
+    }
+    pushBtnGuncelle(true);
+  }catch(e){
+    console.log('Push durum kontrol hatası:',e.message);
+    pushBtnGuncelle(false);
+  }
+}
+
 async function pushIzniIste(){
   if(!('serviceWorker' in navigator)||!('PushManager' in window)){
     toast('Bu cihaz push bildirimi desteklemiyor');return;
@@ -1267,18 +1325,16 @@ async function pushIzniIste(){
   if(izin!=='granted'){toast('Bildirim izni verilmedi');return;}
   try{
     const reg=await navigator.serviceWorker.ready;
+    // Mevcut aboneliği iptal et, yeniden abone ol
+    const mevcutSub=await reg.pushManager.getSubscription();
+    if(mevcutSub)await mevcutSub.unsubscribe();
     const sub=await reg.pushManager.subscribe({
       userVisibleOnly:true,
       applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC)
     });
-    const {error}=await sb.from('push_abonelikler').upsert({
-      user_id:USER.id,
-      subscription:sub.toJSON(),
-    },{onConflict:'user_id'});
-    if(error)throw error;
+    await pushAbonelikKaydet(sub);
+    pushBtnGuncelle(true);
     toast('Push bildirimleri aktif ✓');
-    const btn=$('push-btn');
-    if(btn){btn.textContent='🔔 Bildirimler Aktif';btn.style.color='var(--ok)';}
   }catch(e){toast('Hata: '+e.message);}
 }
 
@@ -1298,7 +1354,7 @@ async function pushBildirimGonder(title,body){
 async function yaklaşanBildirimKontrol(){
   if(!USER)return;
   const uyarilar=[];
-  const ESIKLER=[7,3,1]; // Bu günlerde bildirim gönder
+  const ESIKLER=[30,14,7,3,1]; // Bu günlerde bildirim gönder
 
   kayitlar.forEach(k=>{
     if(!k.tamamlandi&&k.tarih){
@@ -2054,7 +2110,10 @@ async function init(){
     }else{
       await loadAll();
       hideLoading();hideLogin();showApp();showView('ana');
-      setTimeout(()=>yaklaşanBildirimKontrol(),3000);
+      setTimeout(()=>{
+        yaklaşanBildirimKontrol();
+        pushDurumKontrol(); // Buton durumunu güncelle + token yenile
+      },3000);
     }
   }else{
     hideLoading();showLogin();
@@ -2064,7 +2123,10 @@ async function init(){
       USER=session.user;
       await loadAll();
       hideLoading();hideLogin();showApp();showView('ana');
-      setTimeout(()=>yaklaşanBildirimKontrol(),3000);
+      setTimeout(()=>{
+        yaklaşanBildirimKontrol();
+        pushDurumKontrol();
+      },3000);
     }
     if(!session&&USER){USER=null;hideApp();showLogin();}
   });
