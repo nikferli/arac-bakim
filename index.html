@@ -1364,14 +1364,14 @@ async function yaklaşanBildirimKontrol(){
   }
 
   const uyarilar=[];
-  const ESIKLER=[30,14,7,3,1];
+  const ESIKLER=[7,3,1,0];
 
   kayitlar.forEach(k=>{
     if(!k.tamamlandi&&k.tarih){
       const g=daysUntil(k.tarih);
       if(ESIKLER.includes(g))uyarilar.push({
         title:'⏰ Bakım Hatırlatması',
-        body:`${catInfo(k.kat).ic} ${k.baslik} — ${g===1?'yarın!':g+' gün kaldı'}`
+        body:`${catInfo(k.kat).ic} ${k.baslik} — ${g===0?'bugün!':g===1?'yarın!':g+' gün kaldı'}`
       });
       if(g<0&&g>=-1)uyarilar.push({
         title:'⚠ Bakım Gecikti!',
@@ -1382,7 +1382,7 @@ async function yaklaşanBildirimKontrol(){
       const g=daysUntil(k.starih);
       if(ESIKLER.includes(g))uyarilar.push({
         title:'⏰ Sonraki Bakım Yaklaşıyor',
-        body:`${catInfo(k.kat).ic} ${k.baslik} — ${g===1?'yarın!':g+' gün kaldı'}`
+        body:`${catInfo(k.kat).ic} ${k.baslik} — ${g===0?'bugün!':g===1?'yarın!':g+' gün kaldı'}`
       });
     }
     if(k.tamamlandi&&k.skm){
@@ -1401,7 +1401,7 @@ async function yaklaşanBildirimKontrol(){
     const g=daysUntil(b.bitis_tarihi);
     if(ESIKLER.includes(g)||g===b.hatirlatma_gun)uyarilar.push({
       title:'📋 Belge Yenileme',
-      body:`${belgeInfo(b.tip).ic} ${b.baslik} — ${g===1?'yarın!':g+' gün kaldı'}`
+      body:`${belgeInfo(b.tip).ic} ${b.baslik} — ${g===0?'bugün!':g===1?'yarın!':g+' gün kaldı'}`
     });
     if(g<0&&g>=-1)uyarilar.push({
       title:'⚠ Belge Süresi Doldu!',
