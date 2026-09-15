@@ -740,11 +740,15 @@ function fmtKm(n){return n?Number(n).toLocaleString('tr-TR')+' km':'';}
 function fmtDate(d){return d?new Date(d).toLocaleDateString('tr-TR',{day:'numeric',month:'short',year:'numeric'}):''}
 function fmtTL(n){return'₺'+(n||0).toLocaleString('tr-TR',{maximumFractionDigits:0});}
 function daysUntil(d){
-  const t=new Date(d);
-  const n=new Date();
-  const nTR=new Date(n.toLocaleDateString('tr-TR',{timeZone:'Europe/Istanbul'}));
-  const tTR=new Date(t.toLocaleDateString('tr-TR',{timeZone:'Europe/Istanbul'}));
-  return Math.ceil((tTR-nTR)/86400000);
+  if(!d)return NaN;
+  // Tarihi parçala (YYYY-MM-DD formatı)
+  const [yil,ay,gun]=String(d).split('-').map(Number);
+  const t=new Date(yil,ay-1,gun); // Yerel saat
+  // Bugünü Türkiye saatiyle al
+  const simdi=new Date();
+  const trSaat=new Date(simdi.toLocaleString('en-US',{timeZone:'Europe/Istanbul'}));
+  const bugun=new Date(trSaat.getFullYear(),trSaat.getMonth(),trSaat.getDate());
+  return Math.round((t-bugun)/86400000);
 }
 function uid(){return crypto.randomUUID();}
 
