@@ -1639,7 +1639,10 @@ function renderAraclar(){
       <div style="flex:1;min-width:0">
         <div class="vc-name">${a.marka} ${a.model}${a.yil?' ('+a.yil+')':''}</div>
         ${a.plaka?`<span class="vc-plate">${a.plaka}</span>`:''}
-        <div class="vc-km">${a.km?fmtKm(a.km):'KM girilmedi'}</div>
+        <div class="vc-km" style="display:flex;align-items:center;gap:8px;margin-top:4px">
+          <span>${a.km?fmtKm(a.km):'KM girilmedi'}</span>
+          <button onclick="hizliKmGuncelle('${a.id}',${a.km||0})" style="background:rgba(217,95,42,.08);border:1px solid rgba(217,95,42,.2);color:var(--accent);border-radius:6px;padding:2px 8px;font-size:11px;font-family:var(--mono);cursor:pointer">KM Güncelle</button>
+        </div>
         ${a.sase_no?`<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:3px">Şase: ${a.sase_no}</div>`:''}
       </div>
       <div class="vc-actions">
@@ -1662,6 +1665,23 @@ function openAracModal(id){
 }
 
 function editArac(id){openAracModal(id);}
+
+async function hizliKmGuncelle(id, mevcutKm){
+  const yeniKm=prompt(`Mevcut KM: ${mevcutKm.toLocaleString('tr-TR')}\n\nYeni KM değerini girin:`,mevcutKm||'');
+  if(!yeniKm)return;
+  const km=parseInt(yeniKm);
+  if(isNaN(km)||km<0){toast('Geçersiz KM değeri!');return;}
+  if(km<mevcutKm){
+    if(!confirm(`Girilen KM (${km.toLocaleString('tr-TR')}) mevcut değerden (${mevcutKm.toLocaleString('tr-TR')}) düşük. Devam edilsin mi?`))return;
+  }
+  setSyncDot('syncing');
+  await sb.from('araclar').update({km}).eq('id',id);
+  await loadAll();setSyncDot('ok');renderAraclar();
+  // Ana sayfayı da güncelle
+  const hdrKm=$('s-km');
+  if(hdrKm)renderAna();
+  toast('KM güncellendi ✓');
+}
 
 function renderIkonList(){
   $('ikon-list').innerHTML=IKONS.map(ic=>`
