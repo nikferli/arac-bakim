@@ -1065,12 +1065,21 @@ function renderAna(){
     );
   }
 
-  // Sıralama
-  const sort=curSort;
-  if(sort==='eski')filtered=[...filtered].sort((a,b)=>new Date(a.tarih)-new Date(b.tarih));
-  else if(sort==='yeni')filtered=[...filtered].sort((a,b)=>new Date(b.tarih)-new Date(a.tarih));
-  else if(sort==='maliyet')filtered=[...filtered].sort((a,b)=>(b.maliyet||0)-(a.maliyet||0));
-  else if(sort==='durum')filtered=[...filtered].sort((a,b)=>Number(a.tamamlandi)-Number(b.tamamlandi));
+  // Sıralama — bekleyen sekmesinde aciliyet, diğerlerinde kullanıcı tercihi
+  if(curTab==='bekleyen'){
+    filtered=[...filtered].sort((a,b)=>{
+      const ga=daysUntil(a.tarih);
+      const gb=daysUntil(b.tarih);
+      // Gecikmiş önce, sonra en yakın tarihli
+      return ga-gb;
+    });
+  }else{
+    const sort=curSort;
+    if(sort==='eski')filtered=[...filtered].sort((a,b)=>new Date(a.tarih)-new Date(b.tarih));
+    else if(sort==='yeni')filtered=[...filtered].sort((a,b)=>new Date(b.tarih)-new Date(a.tarih));
+    else if(sort==='maliyet')filtered=[...filtered].sort((a,b)=>(b.maliyet||0)-(a.maliyet||0));
+    else if(sort==='durum')filtered=[...filtered].sort((a,b)=>Number(a.tamamlandi)-Number(b.tamamlandi));
+  }
 
   const el=$('kayit-list');
   if(!filtered.length){
