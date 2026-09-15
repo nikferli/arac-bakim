@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Araç Bakım — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#F7F5F2;--bg2:#FFFFFF;--bg3:#EFECE7;--bg4:#E6E2DB;
+  --accent:#D95F2A;--text:#18160F;--text2:#78736C;--text3:#B4AFA7;
+  --border:rgba(0,0,0,0.09);--border2:rgba(0,0,0,0.15);
+  --danger:#C82828;--ok:#1A8F62;--warn:#B8831A;
+  --shadow:0 1px 4px rgba(0,0,0,0.07);
+  --font:'Instrument Sans',sans-serif;--mono:'DM Mono',monospace;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#111210;--bg2:#1D1C1A;--bg3:#272522;--bg4:#302E2B;
+    --accent:#F07848;--text:#F0EDE8;--text2:#8C877F;--text3:#4C4844;
+    --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+    --danger:#F05858;--ok:#30C490;--warn:#E8AA38;
+    --shadow:0 1px 4px rgba(0,0,0,0.35);
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:15px;-webkit-font-smoothing:antialiased}
+input,button{font-family:var(--font);font-size:15px}
+button{cursor:pointer;border:none;background:none;color:var(--text)}
+
+.wrap{max-width:900px;margin:0 auto;padding:24px 16px}
+
+/* Header */
+.hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.hdr-left{display:flex;align-items:center;gap:12px}
+.hdr-icon{font-size:28px}
+.hdr-title{font-size:20px;font-weight:600}
+.hdr-sub{font-size:12px;color:var(--text2);font-family:var(--mono);margin-top:2px}
+.btn{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 14px;font-size:13px;transition:background .1s}
+.btn:active{background:var(--bg4)}
+.btn-danger{background:rgba(200,40,40,.08);border:1px solid rgba(200,40,40,.2);color:var(--danger)}
+.btn-sm{padding:5px 10px;font-size:12px}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:24px}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;box-shadow:var(--shadow)}
+.stat-lbl{font-size:11px;color:var(--text2);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.stat-val{font-size:24px;font-weight:600;font-family:var(--mono);color:var(--accent)}
+
+/* Table */
+.table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+.table-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+.table-title{font-size:14px;font-weight:500}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:10px 16px;font-size:11px;color:var(--text2);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);background:var(--bg3)}
+td{padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg3)}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:20px;font-size:11px;font-family:var(--mono)}
+.b-ok{background:rgba(26,143,98,.1);color:var(--ok)}
+.b-warn{background:rgba(184,131,26,.1);color:var(--warn)}
+.b-gray{background:var(--bg3);color:var(--text2)}
+
+/* Login */
+#login{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:32px}
+.login-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:360px;box-shadow:var(--shadow)}
+.login-title{font-size:18px;font-weight:600;margin-bottom:4px}
+.login-sub{font-size:13px;color:var(--text2);margin-bottom:20px}
+.fi{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;outline:none;transition:border-color .15s;color:var(--text)}
+.fi:focus{border-color:var(--accent)}
+.btn-acc{background:var(--accent);border:none;border-radius:8px;padding:10px 20px;font-size:14px;color:#fff;font-weight:600;width:100%;margin-top:12px}
+.btn-acc:active{opacity:.85}
+.btn-acc:disabled{opacity:.5;cursor:not-allowed}
+.err{font-size:12px;color:var(--danger);text-align:center;margin-top:8px;min-height:16px}
+
+/* Loading */
+.loader{width:32px;height:32px;border:3px solid var(--bg3);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:40px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Empty */
+.empty{text-align:center;padding:40px;color:var(--text3);font-size:14px}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:10px 18px;border-radius:30px;font-size:13px;font-family:var(--mono);opacity:0;transition:all .2s;pointer-events:none;z-index:999;white-space:nowrap;box-shadow:var(--shadow)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Confirm modal */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal.open{display:flex}
+.modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:24px;width:100%;max-width:380px}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:8px}
+.modal-body{font-size:14px;color:var(--text2);margin-bottom:20px;line-height:1.6}
+.modal-actions{display:flex;gap:8px}
+</style>
+</head>
+<body>
+
+<!-- GİRİŞ -->
+<div id="login">
+  <div class="login-card">
+    <div class="login-title">🔐 Admin Paneli</div>
+    <div class="login-sub">Sadece yetkili hesap erişebilir</div>
+    <div class="fg" style="margin-bottom:10px">
+      <input class="fi" type="email" id="l-email" placeholder="E-posta" autocomplete="email">
+    </div>
+    <div class="fg">
+      <input class="fi" type="password" id="l-pass" placeholder="Şifre" autocomplete="current-password">
+    </div>
+    <button class="btn-acc" id="l-btn" onclick="girisYap()">Giriş Yap</button>
+    <div class="err" id="l-err"></div>
+  </div>
+</div>
+
+<!-- ANA PANEL -->
+<div id="panel" style="display:none">
+  <div class="wrap">
+    <div class="hdr">
+      <div class="hdr-left">
+        <div class="hdr-icon">🚗</div>
+        <div>
+          <div class="hdr-title">Araç Bakım — Admin</div>
+          <div class="hdr-sub" id="admin-email"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-sm" onclick="yukle()">🔄 Yenile</button>
+        <button class="btn btn-sm" onclick="cikisYap()">Çıkış</button>
+      </div>
+    </div>
+
+    <!-- İSTATİSTİKLER -->
+    <div class="stats">
+      <div class="stat"><div class="stat-lbl">Toplam Kullanıcı</div><div class="stat-val" id="st-kullanici">—</div></div>
+      <div class="stat"><div class="stat-lbl">Toplam Araç</div><div class="stat-val" id="st-arac">—</div></div>
+      <div class="stat"><div class="stat-lbl">Toplam Kayıt</div><div class="stat-val" id="st-kayit">—</div></div>
+      <div class="stat"><div class="stat-lbl">Toplam Yakıt</div><div class="stat-val" id="st-yakit">—</div></div>
+      <div class="stat"><div class="stat-lbl">Toplam Belge</div><div class="stat-val" id="st-belge">—</div></div>
+    </div>
+
+    <!-- KULLANICI TABLOSU -->
+    <div class="table-wrap">
+      <div class="table-hdr">
+        <div class="table-title">Kullanıcılar</div>
+      </div>
+      <div id="tablo-icerik">
+        <div class="loader"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SİLME ONAY MODALI -->
+<div class="modal" id="modal-sil">
+  <div class="modal-box">
+    <div class="modal-title">⚠ Kullanıcı Sil</div>
+    <div class="modal-body" id="modal-sil-text"></div>
+    <div class="modal-actions">
+      <button class="btn" style="flex:1" onclick="closeModal()">İptal</button>
+      <button class="btn btn-danger" style="flex:1" id="modal-sil-btn" onclick="silOnay()">Sil</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPA_URL='https://nvnvmnumcxckrxaxnqgg.supabase.co';
+const SUPA_KEY='sb_publishable_9SjeGz7rJpcSWddSVQZodg_HIC68cWA';
+const ADMIN_API='https://nvnvmnumcxckrxaxnqgg.supabase.co/functions/v1/admin-api';
+const ADMIN_EMAIL='701176@gmail.com';
+
+const {createClient}=supabase;
+const sb=createClient(SUPA_URL,SUPA_KEY);
+
+let kullanicilar=[];
+let silKullaniciId=null;
+let SESSION=null;
+
+// ─── TOAST ───────────────────────────────────────
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ─── GİRİŞ ───────────────────────────────────────
+async function girisYap(){
+  const email=document.getElementById('l-email').value.trim();
+  const pass=document.getElementById('l-pass').value;
+  const err=document.getElementById('l-err');
+  const btn=document.getElementById('l-btn');
+  err.textContent='';
+  if(!email||!pass){err.textContent='E-posta ve şifre zorunlu.';return;}
+  btn.disabled=true;btn.textContent='Giriş yapılıyor...';
+  const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  btn.disabled=false;btn.textContent='Giriş Yap';
+  if(error){err.textContent='Hatalı e-posta veya şifre.';return;}
+  if(data.user.email!==ADMIN_EMAIL){
+    await sb.auth.signOut();
+    err.textContent='Bu hesabın admin yetkisi yok.';return;
+  }
+  SESSION=data.session;
+  goster();
+}
+
+async function cikisYap(){
+  await sb.auth.signOut();
+  SESSION=null;
+  document.getElementById('panel').style.display='none';
+  document.getElementById('login').style.display='flex';
+}
+
+function goster(){
+  document.getElementById('login').style.display='none';
+  document.getElementById('panel').style.display='block';
+  document.getElementById('admin-email').textContent=ADMIN_EMAIL;
+  yukle();
+}
+
+// ─── VERİ YÜKLEMESİ ─────────────────────────────
+async function apiCall(body){
+  const {data:{session}}=await sb.auth.getSession();
+  const res=await fetch(ADMIN_API,{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'Authorization':'Bearer '+(session?.access_token||'')
+    },
+    body:JSON.stringify(body)
+  });
+  return res.json();
+}
+
+async function yukle(){
+  document.getElementById('tablo-icerik').innerHTML='<div class="loader"></div>';
+  const data=await apiCall({action:'list'});
+  if(data.error){toast('Hata: '+data.error);return;}
+  kullanicilar=data.users||[];
+  renderStats();
+  renderTablo();
+}
+
+function renderStats(){
+  document.getElementById('st-kullanici').textContent=kullanicilar.length;
+  document.getElementById('st-arac').textContent=kullanicilar.reduce((s,u)=>s+(u.arac||0),0);
+  document.getElementById('st-kayit').textContent=kullanicilar.reduce((s,u)=>s+(u.kayit||0),0);
+  document.getElementById('st-yakit').textContent=kullanicilar.reduce((s,u)=>s+(u.yakit||0),0);
+  document.getElementById('st-belge').textContent=kullanicilar.reduce((s,u)=>s+(u.belge||0),0);
+}
+
+function fmtDate(d){
+  if(!d)return '—';
+  return new Date(d).toLocaleDateString('tr-TR',{day:'numeric',month:'short',year:'numeric'});
+}
+
+function fmtDateTime(d){
+  if(!d)return '—';
+  return new Date(d).toLocaleDateString('tr-TR',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+function renderTablo(){
+  if(!kullanicilar.length){
+    document.getElementById('tablo-icerik').innerHTML='<div class="empty">Kullanıcı bulunamadı</div>';
+    return;
+  }
+  document.getElementById('tablo-icerik').innerHTML=`
+    <table>
+      <thead>
+        <tr>
+          <th>E-posta</th>
+          <th>Kayıt Tarihi</th>
+          <th>Son Giriş</th>
+          <th>Araç</th>
+          <th>Bakım</th>
+          <th>Yakıt</th>
+          <th>Belge</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${kullanicilar.map(u=>`
+          <tr>
+            <td>
+              <div style="font-weight:500">${u.email}</div>
+              <div style="font-size:11px;color:var(--text3);font-family:var(--mono)">${u.id.slice(0,8)}...</div>
+            </td>
+            <td style="font-family:var(--mono);font-size:12px">${fmtDate(u.created_at)}</td>
+            <td style="font-family:var(--mono);font-size:12px">${fmtDateTime(u.last_sign_in)}</td>
+            <td><span class="badge b-gray">🚗 ${u.arac||0}</span></td>
+            <td><span class="badge b-gray">🔧 ${u.kayit||0}</span></td>
+            <td><span class="badge b-gray">⛽ ${u.yakit||0}</span></td>
+            <td><span class="badge b-gray">📋 ${u.belge||0}</span></td>
+            <td>
+              ${u.email===ADMIN_EMAIL
+                ?'<span style="font-size:11px;color:var(--ok);font-family:var(--mono)">👑 Admin</span>'
+                :`<button class="btn btn-sm btn-danger" onclick="silKullanici('${u.id}','${u.email}')">Sil</button>`
+              }
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+// ─── SİLME ───────────────────────────────────────
+function silKullanici(id,email){
+  silKullaniciId=id;
+  const u=kullanicilar.find(x=>x.id===id);
+  document.getElementById('modal-sil-text').innerHTML=
+    `<strong>${email}</strong> kullanıcısını ve tüm verilerini silmek istediğinizden emin misiniz?<br><br>
+    <span style="font-family:var(--mono);font-size:12px">
+      🚗 ${u?.arac||0} araç &nbsp;
+      🔧 ${u?.kayit||0} bakım &nbsp;
+      ⛽ ${u?.yakit||0} yakıt &nbsp;
+      📋 ${u?.belge||0} belge
+    </span><br><br>
+    <span style="color:var(--danger)">Bu işlem geri alınamaz!</span>`;
+  document.getElementById('modal-sil').classList.add('open');
+}
+
+async function silOnay(){
+  if(!silKullaniciId)return;
+  const btn=document.getElementById('modal-sil-btn');
+  btn.disabled=true;btn.textContent='Siliniyor...';
+  const data=await apiCall({action:'delete',userId:silKullaniciId});
+  btn.disabled=false;btn.textContent='Sil';
+  if(data.error){toast('Hata: '+data.error);closeModal();return;}
+  closeModal();toast('Kullanıcı silindi ✓');
+  await yukle();
+}
+
+function closeModal(){
+  document.getElementById('modal-sil').classList.remove('open');
+  silKullaniciId=null;
+}
+
+document.getElementById('modal-sil').addEventListener('click',e=>{
+  if(e.target===document.getElementById('modal-sil'))closeModal();
+});
+
+// Enter ile giriş
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&document.getElementById('login').style.display!=='none')girisYap();
+});
+
+// ─── BAŞLATMA ────────────────────────────────────
+(async()=>{
+  const {data:{session}}=await sb.auth.getSession();
+  if(session&&session.user.email===ADMIN_EMAIL){
+    SESSION=session;
+    goster();
+  }
+})();
+</script>
+</body>
+</html>
