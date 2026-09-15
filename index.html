@@ -1590,6 +1590,27 @@ async function toggleDone(id,current){
   const tamamlandi=current==='true'||current===true?false:true;
   await sb.from('kayitlar').update({tamamlandi}).eq('id',id);
   await loadAll();setSyncDot('ok');renderAna();
+
+  // Tamamlandı işaretlenince sonraki bakımı oluşturmayı öner
+  if(tamamlandi){
+    const k=kayitlar.find(x=>x.id===id);
+    if(k&&(k.skm||k.starih)){
+      const bilgi=[k.skm?fmtKm(k.skm):'',k.starih?fmtDate(k.starih):''].filter(Boolean).join(' · ');
+      if(confirm(`"${k.baslik}" tamamlandı! ✓\n\nSonraki bakım için yeni kayıt oluşturulsun mu?\n${bilgi}`)){
+        selCat=k.kat;
+        showView('ekle');
+        setTimeout(()=>{
+          $('e-baslik').value=k.baslik;
+          if(k.skm)$('e-km').value=k.skm;
+          if(k.starih)$('e-tarih').value=k.starih;
+          const sel=$('e-arac-sel');
+          if(sel)sel.value=k.arac_id;
+          renderCatGrid();
+          toast('Sonraki bakım bilgilerini doldurun');
+        },300);
+      }
+    }
+  }
 }
 
 async function delKayit(id){
