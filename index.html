@@ -931,12 +931,14 @@ function statusBadge(k){
   if(k.tamamlandi&&k.starih){
     const g=daysUntil(k.starih);
     if(g<0)return`<span class="badge b-due">⚠ Tarih geçti</span>`;
+    if(g===0)return`<span class="badge b-due">📅 Bugün!</span>`;
     if(g<30)return`<span class="badge b-warn">📅 ${g} gün kaldı</span>`;
   }
   // Bekleyen kayıt (yapılacak tarih)
   if(!k.tamamlandi){
     const g=daysUntil(k.tarih);
     if(g<0)return`<span class="badge b-due">Gecikmiş ${Math.abs(g)}g</span>`;
+    if(g===0)return`<span class="badge b-due">⚠ Bugün!</span>`;
     if(g<30)return`<span class="badge b-warn">${g} gün kaldı</span>`;
     return`<span class="badge b-info">${g} gün kaldı</span>`;
   }
