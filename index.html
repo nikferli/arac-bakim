@@ -469,6 +469,11 @@ select option{background:var(--bg3)}
           PDF Rapor İndir
         </button>
         <button class="btn btn-full" onclick="signOut()" style="margin-top:6px;color:var(--danger)">Çıkış Yap</button>
+        <div id="admin-link-wrap" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+          <a href="./admin.html" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:11px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);font-size:13px;color:var(--text2);text-decoration:none;font-family:var(--mono);text-transform:uppercase;letter-spacing:.3px">
+            🔐 Admin Paneli
+          </a>
+        </div>
         <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
           <div class="sec">Bildirim Ayarları</div>
           <button class="io-btn btn-full" id="push-btn" onclick="pushIzniIste()" style="justify-content:center">
@@ -1894,6 +1899,11 @@ async function delYakit(id){
 
 // ─── RAPOR ───────────────────────────────────────
 function renderRapor(){
+  // Admin linki — sadece admin e-postası için göster
+  const adminWrap=$('admin-link-wrap');
+  if(adminWrap&&USER){
+    adminWrap.style.display=USER.email==='701176@gmail.com'?'block':'none';
+  }
   const klist=selAracId?kayitlar.filter(k=>k.arac_id===selAracId):kayitlar;
   const y=new Date().getFullYear();
   const toplam=klist.reduce((s,k)=>s+(k.maliyet||0),0);
