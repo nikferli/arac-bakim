@@ -367,6 +367,21 @@ select option{background:var(--bg3)}
       <div class="filter-panel-inner">
         <div class="fp-label">Kategori</div>
         <div class="filter-chips" id="filter-chips"></div>
+        <div class="fp-label" style="margin-top:10px">Tarih Aralığı</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;padding:0 14px;margin-bottom:4px">
+          <button class="sort-chip active" data-range="tumu" onclick="setRange(this,'tumu')">Tümü</button>
+          <button class="sort-chip" data-range="bu_ay" onclick="setRange(this,'bu_ay')">Bu ay</button>
+          <button class="sort-chip" data-range="3_ay" onclick="setRange(this,'3_ay')">Son 3 ay</button>
+          <button class="sort-chip" data-range="bu_yil" onclick="setRange(this,'bu_yil')">Bu yıl</button>
+          <button class="sort-chip" data-range="ozel" onclick="setRange(this,'ozel')">Özel...</button>
+        </div>
+        <div id="ozel-tarih-panel" style="display:none;padding:6px 14px;display:none">
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="date" class="fi" id="f-tarih-bas" style="flex:1;padding:6px 10px;font-size:12px" onchange="renderAna()">
+            <span style="color:var(--text2);font-size:12px">—</span>
+            <input type="date" class="fi" id="f-tarih-bit" style="flex:1;padding:6px 10px;font-size:12px" onchange="renderAna()">
+          </div>
+        </div>
         <div class="fp-label" style="margin-top:10px">Sırala</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;padding:0 14px">
           <button class="sort-chip active" data-sort="yeni" onclick="setSort(this,'yeni')">En yeni</button>
@@ -973,22 +988,55 @@ function renderAna(){
       return`<div class="fchip${selKat===kat?' active':''}" onclick="setKat('${kat}')">${c.ic} ${c.lb}</div>`;
     }).join('');
 
-  // Uyarılar — bakım + belgeler
-  const yaklaşan=list.filter(k=>{
+  // Uyarılar — akıllı sıralama
+  const yaklaşan=[];
+  list.forEach(k=>{
     const a=araclar.find(x=>x.id===k.arac_id);const km=a?a.km:0;
-    if(k.tamamlandi&&k.skm&&km>=k.skm-1500)return true;
-    if(k.tamamlandi&&k.starih&&daysUntil(k.starih)<30)return true;
-    if(!k.tamamlandi&&daysUntil(k.tarih)<30)return true;
-    return false;
+    let oncelik=999,aciklama='';
+    if(k.tamamlandi&&k.skm&&km>=k.skm){
+      oncelik=0;aciklama=`KM geçti (${fmtKm(k.skm)})`;
+    }else if(k.tamamlandi&&k.starih){
+      const g=daysUntil(k.starih);
+      if(g<0){oncelik=1;aciklama=`${Math.abs(g)} gün geçti`;}
+      else if(g===0){oncelik=2;aciklama='Bugün!';}
+      else if(g<=7){oncelik=3;aciklama=`${g} gün kaldı`;}
+      else if(g<=30){oncelik=4;aciklama=`${g} gün kaldı`;}
+    }else if(k.tamamlandi&&k.skm&&km>=k.skm-1500){
+      const kalan=k.skm-km;
+      oncelik=5;aciklama=`${kalan.toLocaleString('tr-TR')} km kaldı`;
+    }else if(!k.tamamlandi){
+      const g=daysUntil(k.tarih);
+      if(g<0){oncelik=1;aciklama=`${Math.abs(g)} gün geçti`;}
+      else if(g===0){oncelik=2;aciklama='Bugün!';}
+      else if(g<=7){oncelik=3;aciklama=`${g} gün kaldı`;}
+      else if(g<=30){oncelik=4;aciklama=`${g} gün kaldı`;}
+    }
+    if(oncelik<999)yaklaşan.push({k,oncelik,aciklama});
   });
-  const belgeUyari=belgeler.filter(b=>
-    (!selAracId||b.arac_id===selAracId)&&daysUntil(b.bitis_tarihi)<=b.hatirlatma_gun
-  );
-  const tumUyari=[
-    ...yaklaşan.map(k=>`${catInfo(k.kat).ic} ${k.baslik}`),
-    ...belgeUyari.map(b=>`${belgeInfo(b.tip).ic} ${b.baslik}`)
-  ];
-  $('alert-box').innerHTML=tumUyari.length?`<div class="alert"><div class="alert-t">⚠ Dikkat Gerektiren</div>${tumUyari.map(t=>`<div class="alert-item">${t}</div>`).join('')}</div>`:'';
+
+  // Belge uyarıları
+  belgeler.filter(b=>!selAracId||b.arac_id===selAracId).forEach(b=>{
+    const g=daysUntil(b.bitis_tarihi);
+    let oncelik=999,aciklama='';
+    if(g<0){oncelik=1;aciklama=`${Math.abs(g)} gün geçti`;}
+    else if(g===0){oncelik=2;aciklama='Bugün!';}
+    else if(g<=7){oncelik=3;aciklama=`${g} gün kaldı`;}
+    else if(g<=b.hatirlatma_gun){oncelik=4;aciklama=`${g} gün kaldı`;}
+    if(oncelik<999)yaklaşan.push({
+      k:{baslik:b.baslik,kat:'belge',id:b.id},
+      oncelik,aciklama,belge:b
+    });
+  });
+
+  // Önceliğe göre sırala, aynı önceliktekiler kalan güne göre
+  yaklaşan.sort((a,b)=>a.oncelik-b.oncelik);
+
+  const tumUyari=yaklaşan.map(({k,aciklama,belge})=>{
+    const ic=belge?belgeInfo(belge.tip).ic:catInfo(k.kat).ic;
+    return`<div class="alert-item">${ic} ${k.baslik} <span style="color:var(--warn);font-size:11px;font-family:var(--mono)">${aciklama}</span></div>`;
+  });
+
+  $('alert-box').innerHTML=tumUyari.length?`<div class="alert"><div class="alert-t">⚠ Dikkat Gerektiren (${tumUyari.length})</div>${tumUyari.join('')}</div>`:'';
 
   // Tab filtre
   let filtered=list;
@@ -997,6 +1045,9 @@ function renderAna(){
 
   // Kategori filtre
   if(selKat!=='tumu')filtered=filtered.filter(k=>k.kat===selKat);
+
+  // Tarih aralığı filtre
+  filtered=tarihAralikFiltre(filtered);
 
   // Metin arama
   const q=($('search-inp')?$('search-inp').value:'').trim().toLowerCase();
@@ -1064,6 +1115,7 @@ function renderAna(){
 }
 
 let curSort='yeni';
+let curRange='tumu';
 
 function toggleFilterPanel(){
   const panel=$('filter-panel');
@@ -1075,10 +1127,48 @@ function toggleFilterPanel(){
 
 function setSort(el,sort){
   curSort=sort;
-  document.querySelectorAll('.sort-chip').forEach(c=>c.classList.remove('active'));
+  document.querySelectorAll('.sort-chip[data-sort]').forEach(c=>c.classList.remove('active'));
   el.classList.add('active');
   updateFilterBadge();
   renderAna();
+}
+
+function setRange(el,range){
+  curRange=range;
+  document.querySelectorAll('.sort-chip[data-range]').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  const ozel=$('ozel-tarih-panel');
+  if(ozel)ozel.style.display=range==='ozel'?'block':'none';
+  updateFilterBadge();
+  renderAna();
+}
+
+function tarihAralikFiltre(kayitlar){
+  if(curRange==='tumu')return kayitlar;
+  const simdi=new Date();
+  let bas,bit;
+  if(curRange==='bu_ay'){
+    bas=new Date(simdi.getFullYear(),simdi.getMonth(),1);
+    bit=new Date(simdi.getFullYear(),simdi.getMonth()+1,0);
+  }else if(curRange==='3_ay'){
+    bas=new Date(simdi.getFullYear(),simdi.getMonth()-3,1);
+    bit=simdi;
+  }else if(curRange==='bu_yil'){
+    bas=new Date(simdi.getFullYear(),0,1);
+    bit=new Date(simdi.getFullYear(),11,31);
+  }else if(curRange==='ozel'){
+    const basEl=$('f-tarih-bas');const bitEl=$('f-tarih-bit');
+    if(!basEl||!bitEl)return kayitlar;
+    bas=basEl.value?new Date(basEl.value):null;
+    bit=bitEl.value?new Date(bitEl.value):null;
+  }
+  return kayitlar.filter(k=>{
+    if(!k.tarih)return false;
+    const t=new Date(k.tarih);
+    if(bas&&t<bas)return false;
+    if(bit&&t>bit)return false;
+    return true;
+  });
 }
 
 function setKat(kat){
@@ -1550,15 +1640,36 @@ function renderTemplates(){
 async function saveKayit(){
   const baslik=$('e-baslik').value.trim();
   const tarih=$('e-tarih').value;
-  if(!baslik||!tarih){toast('Başlık ve tarih zorunlu!');return;}
+  if(!baslik){
+    $('e-baslik').style.borderColor='var(--danger)';
+    toast('Başlık zorunlu!');
+    $('e-baslik').focus();
+    setTimeout(()=>$('e-baslik').style.borderColor='',2000);
+    return;
+  }
+  if(!tarih){
+    $('e-tarih').style.borderColor='var(--danger)';
+    toast('Tarih zorunlu!');
+    setTimeout(()=>$('e-tarih').style.borderColor='',2000);
+    return;
+  }
   const aracId=$('e-arac-sel').value||selAracId;
   if(!aracId){toast('Önce bir araç ekleyin!');return;}
+  const km=parseInt($('e-km').value)||null;
+  const skm=parseInt($('e-skm').value)||null;
+  const starih=$('e-starih').value||null;
+  // KM validasyonu
+  if(km&&km<0){toast('KM değeri negatif olamaz!');return;}
+  if(km&&skm&&skm<=km){
+    toast('Sonraki bakım KM, yapılan KM\'den büyük olmalı!');
+    $('e-skm').style.borderColor='var(--danger)';
+    setTimeout(()=>$('e-skm').style.borderColor='',2000);
+    return;
+  }
   const btn=$('e-save-btn');btn.disabled=true;btn.textContent='Kaydediliyor...';
   setSyncDot('syncing');
-  const km=parseInt($('e-km').value)||null;
   const row={id:uid(),user_id:USER.id,arac_id:aracId,kat:selCat,baslik,tarih,
-    km,skm:parseInt($('e-skm').value)||null,
-    starih:$('e-starih').value||null,
+    km,skm,starih,
     maliyet:parseFloat($('e-maliyet').value)||null,
     servis:$('e-servis').value.trim(),
     notlar:$('e-notlar').value.trim(),
