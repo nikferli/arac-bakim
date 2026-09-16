@@ -1,4 +1,4 @@
-const CACHE = 'arac-bakim-v3';
+const CACHE = 'arac-bakim-v4';
 const ASSETS = ['./index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
