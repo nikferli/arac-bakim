@@ -265,44 +265,79 @@ function renderTablo(){
     document.getElementById('tablo-icerik').innerHTML='<div class="empty">Kullanıcı bulunamadı</div>';
     return;
   }
-  document.getElementById('tablo-icerik').innerHTML=`
-    <table>
-      <thead>
-        <tr>
-          <th>E-posta</th>
-          <th>Kayıt Tarihi</th>
-          <th>Son Giriş</th>
-          <th>Araç</th>
-          <th>Bakım</th>
-          <th>Yakıt</th>
-          <th>Belge</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
+
+  // Mobil mi kontrol et
+  const isMobile=window.innerWidth<640;
+
+  if(isMobile){
+    // Mobil: kart görünümü
+    document.getElementById('tablo-icerik').innerHTML=`
+      <div style="padding:12px;display:flex;flex-direction:column;gap:10px">
         ${kullanicilar.map(u=>`
-          <tr>
-            <td>
-              <div style="font-weight:500">${u.email}</div>
-              <div style="font-size:11px;color:var(--text3);font-family:var(--mono)">${u.id.slice(0,8)}...</div>
-            </td>
-            <td style="font-family:var(--mono);font-size:12px">${fmtDate(u.created_at)}</td>
-            <td style="font-family:var(--mono);font-size:12px">${fmtDateTime(u.last_sign_in)}</td>
-            <td><span class="badge b-gray">🚗 ${u.arac||0}</span></td>
-            <td><span class="badge b-gray">🔧 ${u.kayit||0}</span></td>
-            <td><span class="badge b-gray">⛽ ${u.yakit||0}</span></td>
-            <td><span class="badge b-gray">📋 ${u.belge||0}</span></td>
-            <td>
+          <div style="background:var(--bg3);border-radius:10px;padding:14px">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">
+              <div style="min-width:0">
+                <div style="font-weight:500;font-size:13px;word-break:break-all">${u.email}</div>
+                <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:2px">${u.id.slice(0,8)}...</div>
+              </div>
               ${u.email===ADMIN_EMAIL
-                ?'<span style="font-size:11px;color:var(--ok);font-family:var(--mono)">👑 Admin</span>'
-                :`<button class="btn btn-sm btn-danger" onclick="silKullanici('${u.id}','${u.email}')">Sil</button>`
+                ?'<span style="font-size:11px;color:var(--ok);font-family:var(--mono);flex-shrink:0">👑 Admin</span>'
+                :`<button class="btn btn-sm btn-danger" style="flex-shrink:0" onclick="silKullanici('${u.id}','${u.email}')">Sil</button>`
               }
-            </td>
-          </tr>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+              <span class="badge b-gray">🚗 ${u.arac||0} araç</span>
+              <span class="badge b-gray">🔧 ${u.kayit||0} bakım</span>
+              <span class="badge b-gray">⛽ ${u.yakit||0} yakıt</span>
+              <span class="badge b-gray">📋 ${u.belge||0} belge</span>
+            </div>
+            <div style="font-size:11px;color:var(--text2);font-family:var(--mono)">
+              Kayıt: ${fmtDate(u.created_at)} · Son giriş: ${fmtDate(u.last_sign_in)}
+            </div>
+          </div>
         `).join('')}
-      </tbody>
-    </table>
-  `;
+      </div>`;
+  } else {
+    // Masaüstü: tablo görünümü
+    document.getElementById('tablo-icerik').innerHTML=`
+      <table>
+        <thead>
+          <tr>
+            <th>E-posta</th>
+            <th>Kayıt Tarihi</th>
+            <th>Son Giriş</th>
+            <th>Araç</th>
+            <th>Bakım</th>
+            <th>Yakıt</th>
+            <th>Belge</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${kullanicilar.map(u=>`
+            <tr>
+              <td>
+                <div style="font-weight:500">${u.email}</div>
+                <div style="font-size:11px;color:var(--text3);font-family:var(--mono)">${u.id.slice(0,8)}...</div>
+              </td>
+              <td style="font-family:var(--mono);font-size:12px">${fmtDate(u.created_at)}</td>
+              <td style="font-family:var(--mono);font-size:12px">${fmtDateTime(u.last_sign_in)}</td>
+              <td><span class="badge b-gray">🚗 ${u.arac||0}</span></td>
+              <td><span class="badge b-gray">🔧 ${u.kayit||0}</span></td>
+              <td><span class="badge b-gray">⛽ ${u.yakit||0}</span></td>
+              <td><span class="badge b-gray">📋 ${u.belge||0}</span></td>
+              <td>
+                ${u.email===ADMIN_EMAIL
+                  ?'<span style="font-size:11px;color:var(--ok);font-family:var(--mono)">👑 Admin</span>'
+                  :`<button class="btn btn-sm btn-danger" onclick="silKullanici('${u.id}','${u.email}')">Sil</button>`
+                }
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>`;
+  }
+}
 }
 
 // ─── SİLME ───────────────────────────────────────
